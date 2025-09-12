@@ -6,6 +6,33 @@ source /assets/defaults/10-nginx
 prepare_service
 PROCESS_NAME="lemonldap-ng"
 
+cat <<EOF
+
+*******************************************************************************************
+*                                                                                         *
+*                    END OF LIFE NOTICE AUGUST 18, 2025                                   *
+*                               tiredofit/lemonldap                                       *
+*                                                                                         *
+* This image is no longer maintained as of and will not receive updates.                  *
+*                                                                                         *
+* A successor image is available at:                                                      *
+*                                                                                         *
+* Repository | Documentation:                                                             *
+*   - https://github.com/nfrastack/container-lemonldap                                    *
+*                                                                                         *
+* Image Registries:                                                                       *
+*   - https://hub.docker.com/r/nfrastack/lemonldap                                        *
+*   - https://github.com/nfrastack/container-lemonldap/pkgs/container/container-lemonldap *
+*                                                                                         *
+* Please visit https://nfrastack.com for more information.                                *
+*                                                                                         *
+*******************************************************************************************f
+
+EOF
+
+sleep 15
+
+
 mkdir -p /etc/lemonldap-ng \
          /var/lib/lemonldap-ng/cache \
          /var/lib/lemonldap-ng/sessions/lock \

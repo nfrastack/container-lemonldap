@@ -1,3 +1,11 @@
+## 2.0.84 2025-09-12 <dave at tiredofit dot ca>
+
+Add EOL Notice to deprecated image
+
+   ### Added
+      - LemonLDAP:NG 2.21.3
+
+
 ## 2.0.83 2025-07-11 <dave at tiredofit dot ca>
 
    ### Added
