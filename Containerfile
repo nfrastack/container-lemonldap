@@ -63,6 +63,7 @@ ENV \
     NGINX_LOG_ERROR_FILE=error.log \
     NGINX_LOG_ERROR_LOCATION=/logs/nginx/ \
     NGINX_SITE_ENABLED=null \
+    NGINX_WORKER_PROCESSES=1 \
     #NGINX_WEBROOT=/www/llng \
     PATH=/www/llng/bin:${PATH} \
     IMAGE_NAME="nfrastack/lemonldap" \
