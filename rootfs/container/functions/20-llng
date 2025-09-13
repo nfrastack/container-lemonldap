@@ -1,8 +1,29 @@
-#!/command/with-contenv bash
+# SPDX-FileCopyrightText: © 2025 Nfrastack <code@nfrastack.com>
+#
+# SPDX-License-Identifier: MIT
 
-bootstrap_configuration() {
+llng_bootstrap_filesystem(){
+    create_folder \
+                   "${DATA_PATH},\
+                   ${DATA_PATH}/cache \
+                   ${DATA_PATH}/conf \
+                   ${DATA_PATH}/psessions/lock \
+                   ${DATA_PATH}/sessions/lock \
+                   ${LOG_PATH}" \
+                   llng:llng 755
+}
+
+mkdir -p \
+        /etc/lemonldap-ng \
+        "${LOG_PATH}" \
+        "${DATA_PATH}"/cache \
+        "${DATA_PATH}"/conf \
+        "${DATA_PATH}"/psessions/lock \
+        "${DATA_PATH}"/sessions/lock
+
+llng_bootstrap_configuration() {
   if [ ! "$(ls -A /var/lib/lemonldap-ng/conf/)" ]; then
-    cp -R /assets/llng/conf/lmConf-1.json /var/lib/lemonldap-ng/conf/
+    cp -R /container/data/llng/llng/conf/lmConf-1.json /var/lib/lemonldap-ng/conf/
     print_debug "Bootstrapping Initial Configuration"
 
     ### Modify File Configuration
@@ -16,7 +37,7 @@ bootstrap_configuration() {
   fi
 }
 
-configure_configuration() {
+llng_configure_configuration() {
     case "${CONFIG_TYPE,,}" in
         "file" )
             config_configuration=$(cat<<EOF
@@ -26,14 +47,15 @@ localStorage=Cache::FileCache
 localStorageOptions={'namespace' => '${CACHE_TYPE_FILE_NAMESPACE}','default_expires_in' => '${CACHE_TYPE_FILE_EXPIRY}', 'directory_umask' => '${CACHE_TYPE_FILE_DIR_MASK}', 'cache_root' => '${CACHE_TYPE_FILE_PATH}', 'cache_depth' => '${CACHE_TYPE_FILE_DEPTH}', }
 EOF
                         )
-            echo "0 */12 * * * /usr/share/lemonldap-ng/bin/purgeCentralCache > /dev/null 2>&1" >> /assets/cron/lemonldap-purgecentralcache
-            echo "5 5 * * 6 llng /usr/share/lemonldap-ng/bin/rotateOidcKeys > /dev/null 2>&1" >> /assets/cron/lemonldap-rotateoidckeys
+            echo "0 */12 * * * /usr/share/lemonldap-ng/bin/purgeCentralCache > /dev/null 2>&1" >> /container/cron/lemonldap-purgecentralcache
+            echo "5 5 * * 6 llng /usr/share/lemonldap-ng/bin/rotateOidcKeys > /dev/null 2>&1" >> /container/cron/lemonldap-rotateoidckeys
         ;;
         "rest" )
-            transform_file_var \
-                                    REST_HOST \
-                                    REST_USER \
-                                    REST_PASS
+            transform_var file \
+                                REST_HOST \
+                                REST_PASS \
+                                REST_USER
+
 
             config_configuration=$(cat<<EOF
 type = REST
@@ -42,16 +64,17 @@ User = ${REST_USER}
 Password = ${REST_PASS}
 EOF
                         )
-            echo "1 * * * * /usr/share/lemonldap-ng/bin/purgeLocalCache  > /dev/null 2>&1" >> /assets/cron/lemonldap-purgelocalcache
+            echo "1 * * * * /usr/share/lemonldap-ng/bin/purgeLocalCache  > /dev/null 2>&1" >> /container/cron/lemonldap-purgelocalcache
         ;;
     esac
 }
 
-configure_fail2ban_llng() {
-    source /assets/default/07-firewall
+llng_configure_fail2ban_llng() {
+    source /container/base/*/07-firewall
     mkdir -p "${NGINX_LOG_ERROR_LOCATION}"
     touch "${NGINX_LOG_ERROR_LOCATION}"/error-handler.log
-    cat <<EOF > "${FAIL2BAN_CONFIG_PATH}"/jail.d/llng.conf
+    chown -R "${NGINX_USER}":"${NGINX_GROUP}" "${NGINX_LOG_ERROR_LOCATION}"
+    cat <<EOF | silent tee "${FAIL2BAN_CONFIG_PATH}"/jail.d/llng.conf
 [llng]
 enabled  = true
 backend  = auto
@@ -63,7 +86,7 @@ maxretry = 3
 EOF
 }
 
-configure_api() {
+llng_configure_api() {
     if var_true "${ENABLE_API}" ; then
         print_debug "Configuring Manager API"
         nginx_site_enable api
@@ -73,6 +96,7 @@ configure_api() {
                                                             NGINX_LOG_ACCESS_FORMAT \
                                                             NGINX_LOG_ACCESS_LOCATION \
                                                             NGINX_LOG_ERROR_LOCATION
+
         create_logrotate nginx_lemonldap-manager_api "${NGINX_LOG_ACCESS_LOCATION}"/access-api.log nginx-"${NGINX_LOG_ACCESS_FORMAT}" "${NGINX_USER}" "${NGINX_GROUP}"
         create_logrotate nginx_lemonldap-manager_api "${NGINX_LOG_ACCESS_LOCATION}"/error-api.log nginx-error-standard,nginx-error-alt-standard "${NGINX_USER}" "${NGINX_GROUP}"
 
@@ -85,7 +109,7 @@ configure_api() {
 }
 
 
-configure_handler() {
+llng_configure_handler() {
     if var_true "${ENABLE_HANDLER}" ; then
         print_debug "Configuring Handler"
         nginx_site_enable handler
@@ -151,7 +175,7 @@ EOF
     fi
 }
 
-configure_logging() {
+llng_configure_logging() {
     print_debug "Configuring Logging"
     config_logging=$(cat<<EOF
 logger = $(logtype "${LOG_TYPE}")
@@ -161,7 +185,7 @@ EOF
                 )
 }
 
-configure_manager() {
+llng_configure_manager() {
     if var_true "${ENABLE_MANAGER}" ; then
         print_debug "Configuring Manager"
         nginx_site_enable manager
@@ -211,16 +235,16 @@ EOF
     fi
 }
 
-configure_portal() {
+llng_configure_portal() {
     if var_true "${ENABLE_PORTAL}" ; then
         print_debug "Configuring Portal"
         nginx_site_enable portal
         update_template /etc/nginx/sites.available/portal.conf \
                                                             NGINX_LISTEN_PORT \
                                                             NGINX_LOG_ACCESS_FORMAT \
-                                                            PORTAL_HOSTNAME \
                                                             NGINX_LOG_ACCESS_LOCATION \
-                                                            NGINX_LOG_ERROR_LOCATION
+                                                            NGINX_LOG_ERROR_LOCATION \
+                                                            PORTAL_HOSTNAME
 
         if var_false "${PORTAL_ENABLE_GITLAB_OAUTH}" ; then
             sed -i "/rewrite \^\/oauth2\/gitlab/d" /etc/nginx/sites.available/portal.conf
@@ -258,7 +282,7 @@ EOF
 
             portal_rest_users=$(printenv | sort | grep -c '^PORTAL_REST_USER.*')
             for ((i = 01; i <= portal_rest_users; i++)); do
-                transform_file_var \
+                transform_var file \
                                     PORTAL_REST_USER${i}
                                     PORTAL_REST_PASS${i}
                 portal_rest_user=PORTAL_REST_USER${i}
@@ -295,7 +319,10 @@ languages = ${PORTAL_LANGUAGE}
 staticPrefix = ${PORTAL_STATIC_PREFIX}
 templateDir = ${PORTAL_TEMPLATE_DIR}
 globalStorage = Apache::Session::File
-globalStorageOptions = { 'Directory' => '/var/lib/lemonldap-ng/sessions/', 'LockDirectory' => '/var/lib/lemonldap-ng/sessions/lock/', }
+globalStorageOptions = {
+                            'Directory' => '/var/lib/lemonldap-ng/sessions/',
+                            'LockDirectory' => '/var/lib/lemonldap-ng/sessions/lock/',
+                        }
 EOF
                         )
 
@@ -325,7 +352,7 @@ EOF
     fi
 }
 
-configure_socket() {
+llng_configure_socket() {
     print_debug "Configuring Socket"
     if var_true "${HANDLER_SOCKET_TCP_ENABLE}" ; then
         HANDLER_SOCKET=${HANDLER_SOCKET:-"127.0.0.1:${HANDLER_SOCKET_TCP_PORT}"}
@@ -337,30 +364,30 @@ configure_socket() {
     update_template "/etc/nginx/sites.available/*.conf" HANDLER_SOCKET
 }
 
-configure_test() {
+llng_configure_test() {
     if var_true "${ENABLE_TEST}" ; then
         print_debug "Configuring Test Sites"
         nginx_site_enable test
         update_template /etc/nginx/sites.available/test.conf \
-                                                            TEST_HOSTNAME \
                                                             NGINX_LISTEN_PORT \
                                                             NGINX_LOG_ACCESS_FORMAT \
                                                             NGINX_LOG_ACCESS_LOCATION \
-                                                            NGINX_LOG_ERROR_LOCATION
+                                                            NGINX_LOG_ERROR_LOCATION \
+                                                            TEST_HOSTNAME
 
         create_logrotate nginx_lemonldap-manager_test "${NGINX_LOG_ACCESS_LOCATION}"/access-test.log nginx-"${NGINX_LOG_ACCESS_FORMAT}" "${NGINX_USER}" "${NGINX_GROUP}"
         create_logrotate nginx_lemonldap-manager_test "${NGINX_LOG_ACCESS_LOCATION}"/error-test.log nginx-error-standard,nginx-error-alt-standard "${NGINX_USER}" "${NGINX_GROUP}"
     fi
 }
 
-configure_webserver() {
+llng_configure_webserver() {
     sed -i  \
                 -e "\#application/zip#a\ \ \ \ application/x-font-ttf ttf;" \
                 -e "\#application/zip#a\ \ \ \ font/opentype ott;" \
             /etc/nginx/mime.types
 }
 
-setup_container_mode() {
+llng_setup_container_mode() {
     if [ "${MODE,,}" = "master" ] || [ "${MODE,,}" = "main" ] || [ "${MODE,,}" = "aio" ]; then
         print_debug "Container Mode: Master/AIO"
         print_debug "Creating MODE environment generated variables"
@@ -404,7 +431,7 @@ setup_container_mode() {
 
 write_config() {
     if [ "${SETUP_TYPE,,}" = "auto" ] ; then
-        cat <<EOF > "/etc/lemonldap-ng/lemonldap-ng.ini"
+        cat <<EOF | silent sudo -u llng tee "/etc/lemonldap-ng/lemonldap-ng.ini"
 ; Custom Generated LemonLDAP:NG Config Overrides - Do not edit, instead set ENV Vars
 ; If you do want to edit this file and add your own custom, set the environment variable 'SETUP_TYPE=MANUAL' for next restart of container.
 ; Last Generated on $(TZ=${TIMEZONE} date +'%Y-%m-%d %H:%M:%S %Z')
@@ -428,7 +455,7 @@ EOF
 }
 
 ### Logging Translation
-logtype() {
+llng_logtype() {
     case "${1,,}" in
             "console")
                 echo "Lemonldap::NG::Common::Logger::Std"
@@ -442,7 +469,7 @@ logtype() {
         esac
 }
 
-translate_logLevel() {
+llng_translate_logLevel() {
     case "${1,,}" in
         "debug")
             echo "DEBUG"

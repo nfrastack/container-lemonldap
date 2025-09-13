@@ -1,15 +1,37 @@
-name: "build_image"
-
+name: "PUSH - Build on repository Push"
 on:
   push:
     paths:
-      - "**"
-      - "!README.md"
-
+      - '**'
+      - '!CHANGELOG.md'
+      - '!/examples/*'
+      - '!LICENSE'
+      - '!README.md'
+      - '!/zabbix_templates/*'
 jobs:
-  build:
-    #uses: tiredofit/github_actions/.github/workflows/default_amd64_armv7_arm64.yml@main
-    #uses: tiredofit/github_actions/.github/workflows/default_amd64.yml@main
-    #uses: tiredofit/github_actions/.github/workflows/default_amd64_armv7_arm64.yml@main
-    uses: tiredofit/github_actions/.github/workflows/default_amd64_arm64.yml@main
+  prepare:
+    uses: nfrastack/gha/.github/workflows/artifacts-encrypt.yml@main
     secrets: inherit
+  build:
+    needs: prepare
+    strategy:
+      matrix:
+        include:
+          - distro: alpine
+            distro_variant: 3.22
+            latest: true
+    uses: nfrastack/gha/.github/workflows/container-build_and_push.yml@main
+    with:
+      platforms: linux/amd64, linux/arm64
+      base_image: ghcr.io/nfrastack/container-nginx
+      distro: ${{ matrix.distro }}
+      distro_variant: ${{ matrix.distro_variant }}
+      include_distro_tag: false
+      include_variant_tag: false
+      latest: ${{ matrix.latest }}
+    secrets: inherit
+  cleanup:
+    needs: [ build ]
+    uses: nfrastack/gha/.github/workflows/artifacts-remove.yml@main
+    secrets: inherit
+

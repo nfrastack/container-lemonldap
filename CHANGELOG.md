@@ -1,3 +1,9 @@
+## 2.1.0pre 2025-09-12 <code at nfrastack dot com>
+
+    ### Added
+       - Switched to nfastrack/nginx base image
+       - Refactored image
+
 ## 2.0.84 2025-09-12 <dave at tiredofit dot ca>
 
 Add EOL Notice to deprecated image

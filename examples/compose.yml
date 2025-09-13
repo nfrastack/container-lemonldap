@@ -1,6 +1,6 @@
 services:
   lemonldap-app:
-    image: tiredofit/lemonldap:latest
+    image: docker.io/nfrastack/lemonldap:latest
     container_name: lemonldap-app
     volumes:
       - ./data/etc/lemonldap-ng:/etc/lemonldap-ng

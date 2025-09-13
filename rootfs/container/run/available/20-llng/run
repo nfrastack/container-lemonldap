@@ -1,8 +1,11 @@
 #!/command/with-contenv bash
+# SPDX-FileCopyrightText: © 2025 Nfrastack <code@nfrastack.com>
+#
+# SPDX-License-Identifier: MIT
 
-source /assets/functions/00-container
-prepare_service defaults
-PROCESS_NAME="lemonldap-ng-handler"
+source /container/base/functions/container/init
+prepare_service 20-llng
+SERVICE_NAME="lemonldap-ng-handler"
 
 check_container_initialized
 check_service_initialized init
@@ -21,7 +24,8 @@ fi
 liftoff
 
 print_start "Starting (${HANDLER_PROCESSES}) LemonLDAP FastCGI Server ${LEMONLDAP_VERSION} Handlers"
-${silent_arg} exec sudo -u llng /usr/sbin/llng-fastcgi-server \
-                                        ${_socket} \
-                                        -n ${HANDLER_PROCESSES} \
-                                        -foreground
+${silent_arg} exec sudo -u llng \
+                                /usr/sbin/llng-fastcgi-server \
+                                    ${_socket} \
+                                    -n ${HANDLER_PROCESSES} \
+                                    -foreground
