@@ -345,7 +345,6 @@ RUN echo "" && \
             /var/lib/lemonldap-ng/conf/* \
             && \
     deluser nginx && \
-    deluser redis && \
     package remove \
                     LLNG_BUILD_DEPS \
                     && \
