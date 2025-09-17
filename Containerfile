@@ -25,7 +25,8 @@ ARG \
     LEMONLDAP_SESSION_MONGODB_VERSION="v0.21" \
     LEMONLDAP_SESSION_NOSQL_VERSION="05ec4253c3055c301d1e3fb0f722169fee294622" \
     AUTHCAS_VERSION="1.7" \
-    LASSO_VERSION="a58a535028882a92b76f3814f70803872ad5727e" \
+    #LASSO_VERSION="a58a535028882a92b76f3814f70803872ad5727e" \
+    LASSO_VERSION="v2.9.0" \
     LIBU2F_VERSION="master" \
     MINIFY_VERSION="2.24.3" \
     AUTHCAS_REPO_URL="https://sourcesup.renater.fr/frs/download.php/file/5125" \
@@ -43,16 +44,7 @@ COPY LICENSE /usr/src/container/LICENSE
 COPY README.md /usr/src/container/README.md
 
 ENV \
-    #DATA_PATH=/data/ \
-    #DOMAIN_NAME=example.com \
-    #API_HOSTNAME=api.manager.sso.example.com \
-    #HANDLER_HOSTNAME=handler.sso.example.com \
-    #MANAGER_HOSTNAME=manager.sso.example.com \
-    #PORTAL_HOSTNAME=sso.example.com \
-    #TEST_HOSTNAME=test.sso.example.com \
     NGINX_APPLICATION_CONFIGURATION=FALSE \
-    #NGINX_AUTHENTICATION_TYPE=NONE \
-    #NGINX_LISTEN_PORT=80 \
     NGINX_LOG_ACCESS_FORMAT=llng_standard \
     NGINX_ENABLE_CREATE_SAMPLE_HTML=FALSE \
     NGINX_USER=llng \
@@ -178,7 +170,7 @@ RUN echo "" && \
                             && \
     source /container/base/functions/container/build && \
     container_build_log image && \
-    create_user llng 2884 llng 2884 /data && \
+    create_user ${NGINX_USER} 2884 ${NGINX_GROUP} 2884 /data && \
     package update && \
     package upgrade && \
     package install \
@@ -186,28 +178,11 @@ RUN echo "" && \
                     LLNG_RUN_DEPS \
                     && \
     \
-    ### Install Sphinx dependencies for Document Building for Manager
     pip install \
                     --break-system-packages \
                     sphinx_bootstrap_theme \
                     && \
     \
-    ### Compile libu2f-server for 2FA Support
-    clone_git_repo "${LIBU2F_REPO_URL}" ${LIBU2F_VERSION} && \
-    ./autogen.sh && \
-    ./configure \
-                --build=$CBUILD \
-                --host=$CHOST \
-                --prefix=/usr \
-                --sysconfdir=/etc \
-                --mandir=/usr/src/man \
-                --localstatedir=/var \
-                --enable-tests && \
-    make -j$(nproc) && \
-    make install && \
-    container_build_log add "LIBU2F" "${LIBU2F_VERSION}" "${LIBU2F_REPO_URL}" && \
-    \
-### Install Perl Modules Manually not available in Repository
     ln -s /usr/bin/perl /usr/local/bin/perl && \
     curl -L http://cpanmin.us -o /usr/bin/cpanm && \
     chmod +x /usr/bin/cpanm && \
@@ -242,7 +217,6 @@ RUN echo "" && \
                     Web::ID \
                 && \
     \
-### Install various GO, NodeJS Packages for Optimization and adjust temporary symlinks
     cd /usr/src && \
     npm install coffeescript && \
     mkdir -p /usr/src/minify && \
@@ -254,10 +228,7 @@ RUN echo "" && \
     ln -s /usr/bin/yuicompressor /usr/bin/yui-compressor && \
     container_build_log add "Minify" "${MINIFY_VERSION}" "${MINIFY_REPO_URL}" && \
     \
-### Install Lasso
     clone_git_repo "${LASSO_REPO_URL}" "${LASSO_VERSION}" /usr/src/lasso && \
-    echo "2.9.0-dev" > .version && \
-    echo "2.9.0-dev" > .tarball-version && \
     ./autogen.sh \
                  --prefix=/usr \
                  --disable-python \
@@ -268,7 +239,6 @@ RUN echo "" && \
     make install && \
     container_build_log add "LaSSO" "${LASSO_VERSION}" "${LASSO_REPO_URL}" && \
     \
-### Install AuthCAS
     mkdir -p /usr/src/authcas && \
     curl ${AUTHCAS_REPO_URL}/AuthCAS-${AUTHCAS_VERSION}.tar.gz | tar xvfz - --strip 1 -C /usr/src/authcas && \
     cd /usr/src/authcas && \
@@ -277,7 +247,20 @@ RUN echo "" && \
     make install && \
     container_build_log add "AuthCAS" "${AUTHCAS_VERSION}" "${AUTHCAS_REPO_URL}" && \
     \
-### Checkout and Install LemonLDAP
+    clone_git_repo "${LIBU2F_REPO_URL}" ${LIBU2F_VERSION} && \
+    ./autogen.sh && \
+    ./configure \
+                --build=$CBUILD \
+                --host=$CHOST \
+                --prefix=/usr \
+                --sysconfdir=/etc \
+                --mandir=/usr/src/man \
+                --localstatedir=/var \
+                --enable-tests && \
+    make -j$(nproc) && \
+    make install && \
+    container_build_log add "LIBU2F" "${LIBU2F_VERSION}" "${LIBU2F_REPO_URL}" && \
+    \
     if [ "${LEMONLDAP_VERSION}" != "master" ] ; then LEMONLDAP_VERSION=v$LEMONLDAP_VERSION ; fi && \
     clone_git_repo "${LEMONLDAP_REPO_URL}" "${LEMONLDAP_VERSION}" && \
     make dist && \
@@ -294,41 +277,40 @@ RUN echo "" && \
             MANAGERSITEDIR=/usr/share/lemonldap-ng/manager \
             CONFDIR=/etc/lemonldap-ng \
             CRONDIR=/etc/cron.d \
-            APACHEUSER=llng \
-            APACHEGROUP=llng \
+            APACHEUSER=${NGINX_USER} \
+            APACHEGROUP=${NGINX_GROUP} \
             FASTCGISOCKDIR=/var/run/llng-fastcgi-server \
             PROD=yes \
             install \
             && \
     container_build_log add "LemonLDAP:NG" "${LEMONLDAP_VERSION}" "${LEMONLDAP_REPO_URL}" && \
     \
-### Compile Various Apache::Session Modules
     clone_git_repo "${LEMONLDAP_SESSION_NOSQL_REPO_URL}" "${LEMONLDAP_SESSION_NOSQL_VERSION}" && \
     perl Makefile.PL && \
     make -j$(nproc) && \
     make test && \
     make install && \
-    container_build_log add "LemonLDAP:NG Session NoSQL" "${LEMONLDAP_SESSION_NOSQL_VERSION}" "${LEMONLDAP_SESSION_NOSQL_REPO_URL}" && \
+    container_build_log add "LemonLDAP:NG Session NoSQL module" "${LEMONLDAP_SESSION_NOSQL_VERSION}" "${LEMONLDAP_SESSION_NOSQL_REPO_URL}" && \
     \
     clone_git_repo "${LEMONLDAP_SESSION_LDAP_REPO_URL}" "${LEMONLDAP_SESSION_LDAP_VERSION}" && \
     perl Makefile.PL && \
     make -j$(nproc) && \
     make test && \
     make install && \
-    container_build_log add "LemonLDAP:NG Session LDAP" "${LEMONLDAP_SESSION_LDAP_VERSION}" "${LEMONLDAP_SESSION_LDAP_REPO_URL}" && \
+    container_build_log add "LemonLDAP:NG Session LDAP module" "${LEMONLDAP_SESSION_LDAP_VERSION}" "${LEMONLDAP_SESSION_LDAP_REPO_URL}" && \
     \
     clone_git_repo "${LEMONLDAP_SESSION_BROWSEABLE_REPO_URL}" "${LEMONLDAP_SESSION_BROWSEABLE_VERSION}" && \
     perl Build.PL && \
     ./Build && \
     ./Build test && \
     ./Build install && \
-    container_build_log add "LemonLDAP:NG Session Browseable" "${LEMONLDAP_SESSION_BROWSEABLE_VERSION}" "${LEMONLDAP_SESSION_BROESEABLE_REPO_URL}" && \
+    container_build_log add "LemonLDAP:NG Session Browseable module" "${LEMONLDAP_SESSION_BROWSEABLE_VERSION}" "${LEMONLDAP_SESSION_BROESEABLE_REPO_URL}" && \
     \
     mkdir -p /container/data/llng/conf && \
     mv /var/lib/lemonldap-ng/conf/* /container/data/llng/conf/ && \
     mv /etc/lemonldap-ng/lemonldap-ng.ini /container/data/llng/conf/ && \
     mkdir -p /var/run/llng-fastcgi-server && \
-    chown -R llng:llng \
+    chown -R "${NGINX_USER}":"${NGINX_GROUP}" \
                     /container/data/llng \
                     /var/run/llng-fastcgi-server && \
     ln -s /usr/share/lemonldap-ng/doc /usr/share/lemonldap-ng/manager/doc && \
@@ -342,7 +324,7 @@ RUN echo "" && \
             /usr/bin/minify \
             /usr/bin/yui-compressor \
             /usr/bin/yuicompressor \
-            /var/lib/lemonldap-ng/conf/* \
+            #/var/lib/lemonldap-ng/conf/* \
             && \
     deluser nginx && \
     package remove \
