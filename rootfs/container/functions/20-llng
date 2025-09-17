@@ -430,7 +430,7 @@ llng_setup_container_mode() {
     fi
 }
 
-write_config() {
+llng_write_config() {
     if [ "${SETUP_TYPE,,}" = "auto" ] ; then
         cat <<EOF | silent sudo -u llng tee "${CONFIG_PATH}"/lemonldap-ng.ini
 ; Custom Generated LemonLDAP:NG Config Overrides - Do not edit, instead set ENV Vars
@@ -492,4 +492,3 @@ llng_translate_logLevel() {
         ;;
     esac
 }
-zo
