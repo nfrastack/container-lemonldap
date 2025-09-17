@@ -23,7 +23,7 @@ llng_bootstrap_filesystem(){
 }
 
 llng_bootstrap_configuration() {
-  if [ ! "$(ls -A "${DATA_PATH}/conf/)" ]; then
+  if [ ! "$(ls -A "${DATA_PATH}"/conf/)" ]; then
     cp -R /container/data/llng/llng/conf/lmConf-1.json "${DATA_PATH}"/conf/
     print_debug "Bootstrapping Initial Configuration"
 
@@ -492,3 +492,4 @@ llng_translate_logLevel() {
         ;;
     esac
 }
+zo
