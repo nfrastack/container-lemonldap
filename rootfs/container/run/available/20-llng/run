@@ -21,10 +21,25 @@ if [ "${LOG_TYPE,,}" != "console" ] ; then
     silent_arg=silent
 fi
 
+case "${HANDLER_PROCESSES,,}" in
+    auto )
+        HANDLER_PROCESSES=$(nproc)
+    ;;
+    ''|*[!0-9]*)
+        print_error "Invalid HANDLER_PROCESSES value, must be a number"
+        liftoff
+    ;;
+    0)
+        print_error "Invalid HANDLER_PROCESSES value, must be greater than zero"
+        liftoff
+    ;;
+esac
+
 liftoff
 
+
 print_start "Starting (${HANDLER_PROCESSES}) LemonLDAP FastCGI Server ${LEMONLDAP_VERSION} Handlers"
-${silent_arg} exec sudo -u llng \
+${silent_arg} exec sudo -u "${NGINX_USER}" \
                                 /usr/sbin/llng-fastcgi-server \
                                     ${_socket} \
                                     -n ${HANDLER_PROCESSES} \

@@ -48,8 +48,8 @@ localStorage=Cache::FileCache
 localStorageOptions={'namespace' => '${CACHE_TYPE_FILE_NAMESPACE}','default_expires_in' => '${CACHE_TYPE_FILE_EXPIRY}', 'directory_umask' => '${CACHE_TYPE_FILE_DIR_MASK}', 'cache_root' => '${CACHE_TYPE_FILE_PATH}', 'cache_depth' => '${CACHE_TYPE_FILE_DEPTH}', }
 EOF
                         )
-            echo "0 */12 * * * /usr/share/lemonldap-ng/bin/purgeCentralCache > /dev/null 2>&1" >> /container/cron/lemonldap-purgecentralcache
-            echo "5 5 * * 6 llng /usr/share/lemonldap-ng/bin/rotateOidcKeys > /dev/null 2>&1" >> /container/cron/lemonldap-rotateoidckeys
+            echo "0 */12 * * * /usr/share/lemonldap-ng/bin/purgeCentralCache > /dev/null 2>&1" | silent tee /container/cron/lemonldap-purgecentralcache
+            echo "5 5 * * 6 ${NGINX_USER} /usr/share/lemonldap-ng/bin/rotateOidcKeys > /dev/null 2>&1" | silent tee /container/cron/lemonldap-rotateoidckeys
         ;;
         "rest" )
             transform_var file \
@@ -65,7 +65,7 @@ User = ${REST_USER}
 Password = ${REST_PASS}
 EOF
                         )
-            echo "1 * * * * /usr/share/lemonldap-ng/bin/purgeLocalCache  > /dev/null 2>&1" >> /container/cron/lemonldap-purgelocalcache
+            echo "1 * * * * /usr/share/lemonldap-ng/bin/purgeLocalCache  > /dev/null 2>&1" silent tee /container/cron/lemonldap-purgelocalcache
         ;;
     esac
 }

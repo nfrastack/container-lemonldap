@@ -316,14 +316,14 @@ RUN echo "" && \
     ln -s /usr/share/lemonldap-ng/portal /usr/share/lemonldap-ng/portal/htdocs && \
     \
     rm -rf \
-            /etc/lemonldap-ng/* \
+            /etc/lemonldap-ng \
             /root/.bash_history \
             /root/.cpanm \
             /usr/bin/coffee \
             /usr/bin/minify \
             /usr/bin/yui-compressor \
             /usr/bin/yuicompressor \
-            #/var/lib/lemonldap-ng/conf/* \
+            /var/lib/lemonldap-ng \
             && \
     deluser nginx && \
     package remove \
