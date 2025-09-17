@@ -4,26 +4,27 @@
 
 llng_bootstrap_filesystem(){
     create_folder \
-                   "${DATA_PATH},\
+                   "${CONFIG_PATH},\
+                   ${DATA_PATH},\
                    ${DATA_PATH}/cache \
                    ${DATA_PATH}/conf \
                    ${DATA_PATH}/psessions/lock \
                    ${DATA_PATH}/sessions/lock \
                    ${LOG_PATH}" \
-                   llng:llng 755
+                   "${NGINX_USER}:"${NGINX_GROUP} 755
+
+    if [ "${CONFIG_PATH}" != "/etc/lemonldap-ng" ] && [ "${CONFIG_PATH}" != "/etc/lemonldap-ng/" ] && [ ! -L "/etc/lemonldap-ng" ] && [ ! -d "/etc/lemonldap-ng" ] ; then
+        ln -sf "${CONFIG_PATH}" /etc/lemonldap-ng
+    fi
+
+    if [ "${DATA_PATH}" != "/var/lib/lemonldap-ng" ] && [ "${DATA_PATH}" != "/var/lib/lemonldap-ng/" ] && [ ! -L "/var/lib/lemonldap-ng" ] && [ ! -d "/var/lib/lemonldap-ng" ] ; then
+        ln -sf "${DATA_PATH}" /var/lib/lemonldap-ng
+    fi
 }
 
-mkdir -p \
-        /etc/lemonldap-ng \
-        "${LOG_PATH}" \
-        "${DATA_PATH}"/cache \
-        "${DATA_PATH}"/conf \
-        "${DATA_PATH}"/psessions/lock \
-        "${DATA_PATH}"/sessions/lock
-
 llng_bootstrap_configuration() {
-  if [ ! "$(ls -A /var/lib/lemonldap-ng/conf/)" ]; then
-    cp -R /container/data/llng/llng/conf/lmConf-1.json /var/lib/lemonldap-ng/conf/
+  if [ ! "$(ls -A "${DATA_PATH}/conf/)" ]; then
+    cp -R /container/data/llng/llng/conf/lmConf-1.json "${DATA_PATH}"/conf/
     print_debug "Bootstrapping Initial Configuration"
 
     ### Modify File Configuration
@@ -142,7 +143,7 @@ EOF
         if [ -n "${HANDLER_LOG_TYPE}" ] ; then
             config_handler=$(cat<<EOF
 ${config_handler}
-logger = $(logtype "$HANDLER_LOG_TYPE")
+logger = $(llng_logtype "$HANDLER_LOG_TYPE")
 EOF
                             )
         fi
@@ -150,7 +151,7 @@ EOF
         if [ -n "${HANDLER_USER_LOG_TYPE}" ] ; then
             config_handler=$(cat<<EOF
 ${config_handler}
-userLogger = $(logtype "$HANDLER_LOG_TYPE")
+userLogger = $(llng_logtype "$HANDLER_LOG_TYPE")
 EOF
                             )
         fi
@@ -178,8 +179,8 @@ EOF
 llng_configure_logging() {
     print_debug "Configuring Logging"
     config_logging=$(cat<<EOF
-logger = $(logtype "${LOG_TYPE}")
-userLogger = $(logtype "${LOG_TYPE}")
+logger = $(llng_logtype "${LOG_TYPE}")
+userLogger = $(llng_logtype "${LOG_TYPE}")
 logLevel = ${LOG_LEVEL}
 EOF
                 )
@@ -212,7 +213,7 @@ EOF
         if [ -n "${MANAGER_LOG_TYPE}" ] ; then
             config_manager=$(cat<<EOF
 ${config_manager}
-logger = $(logtype "$MANAGER_LOG_TYPE")
+logger = $(llng_logtype "$MANAGER_LOG_TYPE")
 EOF
                             )
         fi
@@ -220,7 +221,7 @@ EOF
         if [ -n "${MANAGER_USER_LOG_TYPE}" ] ; then
             config_manager=$(cat<<EOF
 ${config_manager}
-userLogger = $(logtype "$MANAGER_USER_LOG_TYPE")
+userLogger = $(llng_logtype "$MANAGER_USER_LOG_TYPE")
 EOF
                             )
         fi
@@ -258,7 +259,7 @@ llng_configure_portal() {
             sanity_var IMPERSONATE_HOSTNAME "Impersonation Hostname"
             sanity_var IMPERSONATE_THEME "Impersonation Theme"
 
-            cat <<EOF > /etc/nginx/sites.available/impersonate.conf
+            cat <<EOF | silent tee /etc/nginx/sites.available/impersonate.conf
 server {
     listen ${NGINX_LISTEN_PORT};
     server_name ${IMPERSONATE_HOSTNAME};
@@ -320,8 +321,8 @@ staticPrefix = ${PORTAL_STATIC_PREFIX}
 templateDir = ${PORTAL_TEMPLATE_DIR}
 globalStorage = Apache::Session::File
 globalStorageOptions = {
-                            'Directory' => '/var/lib/lemonldap-ng/sessions/',
-                            'LockDirectory' => '/var/lib/lemonldap-ng/sessions/lock/',
+                            'Directory' => '${DATA_PATH}/sessions/',
+                            'LockDirectory' => '${DATA_PATH}/lock/',
                         }
 EOF
                         )
@@ -329,7 +330,7 @@ EOF
         if [ -n "${PORTAL_LOG_TYPE}" ] ; then
             config_portal=$(cat<<EOF
 ${config_portal}
-logger = $(logtype "$PORTAL_LOG_TYPE")
+logger = $(llng_logtype "$PORTAL_LOG_TYPE")
 EOF
                             )
         fi
@@ -337,7 +338,7 @@ EOF
         if [ -n "${PORTAL_USER_LOG_TYPE}" ] ; then
             config_portal=$(cat<<EOF
 ${config_portal}
-userLogger = $(logtype "$PORTAL_USER_LOG_TYPE")
+userLogger = $(llng_logtype "$PORTAL_USER_LOG_TYPE")
 EOF
                             )
         fi
@@ -431,7 +432,7 @@ llng_setup_container_mode() {
 
 write_config() {
     if [ "${SETUP_TYPE,,}" = "auto" ] ; then
-        cat <<EOF | silent sudo -u llng tee "/etc/lemonldap-ng/lemonldap-ng.ini"
+        cat <<EOF | silent sudo -u llng tee "${CONFIG_PATH}"/lemonldap-ng.ini
 ; Custom Generated LemonLDAP:NG Config Overrides - Do not edit, instead set ENV Vars
 ; If you do want to edit this file and add your own custom, set the environment variable 'SETUP_TYPE=MANUAL' for next restart of container.
 ; Last Generated on $(TZ=${TIMEZONE} date +'%Y-%m-%d %H:%M:%S %Z')

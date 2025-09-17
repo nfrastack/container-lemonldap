@@ -5,6 +5,8 @@
 
 source /container/base/functions/container/init
 prepare_service 06-rsyslog
+prepare-service 10-nginx
+prepare-service 20-lemonldap
 SERVICE_NAME="rsyslog"
 
 if [ "${LOG_TYPE,,}" = "console" ] ;  then
