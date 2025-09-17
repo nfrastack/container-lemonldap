@@ -205,7 +205,7 @@ Depending if `REST` was chosen for `CONFIG_TYPE`, these variables would be used.
 | `HANDLER_REDIRECT_ON_ERROR`         |                                                                                                                                                        | `TRUE`                  |
 | `HANDLER_LOG_TYPE`                  | Override Handler Log - Options `CONSOLE, FILE, SYSLOG`                                                                                                 | `CONSOLE`               |
 | `HANDLER_LOG_LEVEL`                 | Override Handler LogLevel - Options `warn, notice, info, error, debug`                                                                                 | `info`                  |
-| `HANDLER_PROCESSES`                 | Amount of LLNG Handler processes to spawn                                                                                                              | `7`                     |
+| `HANDLER_PROCESSES`                 | Amount of LLNG Handler processes to spawn `auto` for the amount of CPU, otherwise an integer cores                                                                                                              | `1`                     |
 | `HANDLER_USER_LOG_TYPE`             | Override Handler Log User actions - Options `CONSOLE` or `FILE`                                                                                        | `CONSOLE`               |
 
 #### Manager Options

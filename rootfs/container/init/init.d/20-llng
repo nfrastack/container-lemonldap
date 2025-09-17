@@ -4,8 +4,9 @@
 # SPDX-License-Identifier: MIT
 
 source /container/base/functions/container/init
-source /container/base/defaults/*-monitoring
-source /container/defaults/10-nginx
+#source /container/base/defaults/*-monitoring
+#source /container/defaults/10-nginx
+prepare-service 10-nginx
 prepare_service 20-llng
 SERVICE_NAME="lemonldap-ng"
 
