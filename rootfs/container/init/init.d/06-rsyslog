@@ -6,7 +6,7 @@
 source /container/base/functions/container/init
 prepare_service 06-rsyslog
 prepare_service 10-nginx
-prepare_service 20-lemonldap
+prepare_service 20-llng
 SERVICE_NAME="rsyslog"
 
 if [ "${LOG_TYPE,,}" = "console" ] ;  then
@@ -15,13 +15,10 @@ if [ "${LOG_TYPE,,}" = "console" ] ;  then
 else
     create_logrotate lemonldap "${LOG_PATH}"/"${LOG_FILE}" lemonldap "${NGINX_USER}" "${NGINX_GROUP}"
     create_logrotate lemonldap_user "${LOG_PATH}"/"${LOG_FILE_USER}" lemonldap "${NGINX_USER}" "${NGINX_GROUP}"
-   set -x
-   echo "LOG_FILE ${LOG_FILE} LOG_FILE_USER ${LOG_FILE_USER} LOG_PATH ${LOG_PATH}"
     update_template /etc/rsyslog.conf \
                                     LOG_FILE \
                                     LOG_FILE_USER \
                                     LOG_PATH
-set +x
 fi
 
 liftoff
