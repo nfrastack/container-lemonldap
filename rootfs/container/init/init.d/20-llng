@@ -26,9 +26,9 @@ llng_configure_webserver
 llng_configure_socket
 
 chown -R "${NGINX_USER}":"${NGINX_GROUP}" \
-                                            /etc/lemonldap-ng \
+                                            "${CONFIG_PATH}" \
                                             "${LOG_PATH}" \
-                                            /var/lib/lemonldap-ng
+                                            "${DATA_PATH}" ## is this necessary
 
 create_zabbix llng
 custom_files "${CONTAINER_CUSTOM_PATH}" "${NGINX_WEBROOT}" "${NGINX_USER}" "${NGINX_GROUP}"

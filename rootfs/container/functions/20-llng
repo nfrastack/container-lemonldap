@@ -72,9 +72,10 @@ EOF
 
 llng_configure_fail2ban_llng() {
     source /container/base/*/07-firewall
-    mkdir -p "${NGINX_LOG_ERROR_LOCATION}"
-    touch "${NGINX_LOG_ERROR_LOCATION}"/error-handler.log
-    chown -R "${NGINX_USER}":"${NGINX_GROUP}" "${NGINX_LOG_ERROR_LOCATION}"
+    create_folder \
+                    "${NGINX_LOG_ERROR_LOCATION}" \
+                    ${NGINX_USER}:${NGINX_GROUP} 755
+    sudo -u "${NGINX_USER}" "${NGINX_LOG_ERROR_LOCATION}"/error-handler.log
     cat <<EOF | silent tee "${FAIL2BAN_CONFIG_PATH}"/jail.d/llng.conf
 [llng]
 enabled  = true
@@ -91,6 +92,7 @@ llng_configure_api() {
     if var_true "${ENABLE_API}" ; then
         print_debug "Configuring Manager API"
         nginx_site_enable api
+        sanity_var API_HOSTNAME "API Hostname"
         update_template /etc/nginx/sites.available/api.conf \
                                                             API_HOSTNAME \
                                                             NGINX_LISTEN_PORT \
@@ -189,6 +191,7 @@ EOF
 llng_configure_manager() {
     if var_true "${ENABLE_MANAGER}" ; then
         print_debug "Configuring Manager"
+        sanity_var MANAGER_HOSTNAME "Manager Hostname"
         nginx_site_enable manager
         update_template /etc/nginx/sites.available/manager.conf \
                                                             MANAGER_HOSTNAME \
@@ -240,6 +243,7 @@ llng_configure_portal() {
     if var_true "${ENABLE_PORTAL}" ; then
         print_debug "Configuring Portal"
         nginx_site_enable portal
+        sanity_var PORTAL_HOSTNAME "Portal Hostname"
         update_template /etc/nginx/sites.available/portal.conf \
                                                             NGINX_LISTEN_PORT \
                                                             NGINX_LOG_ACCESS_FORMAT \
@@ -289,7 +293,7 @@ EOF
                 portal_rest_user=PORTAL_REST_USER${i}
                 portal_rest_pass=PORTAL_REST_PASS${i}
                 print_debug "Creating REST User: ${!portal_rest_user}"
-                htpasswd -b -n ${!portal_rest_user:-$PORTAL_REST_USER} ${!portal_rest_pass:-$PORTAL_REST_PASS} >> "${PORTAL_REST_AUTH_FILE}"
+                htpasswd -b -n ${!portal_rest_user:-$PORTAL_REST_USER} ${!portal_rest_pass:-$PORTAL_REST_PASS} | silent tee "${PORTAL_REST_AUTH_FILE}"
             done
 
             if [ -f "${PORTAL_REST_AUTH_FILE}" ] ; then
@@ -301,16 +305,22 @@ EOF
                 rm -rf "${_rest_file_tmp}"
                 chown "${NGINX_USER}":"${NGINX_GROUP}" "${PORTAL_REST_AUTH_FILE}"
                 chmod 600 "${PORTAL_REST_AUTH_FILE}"
-                sed -i "/### REST/a\ \       auth_basic_user_file ${PORTAL_REST_AUTH_FILE};" /etc/nginx/sites.available/portal.conf
-                sed -i "/location ~ ^\/index.psgi/a\ \           auth_basic \"Authentication Required\";" /etc/nginx/sites.available/portal.conf
+                sed -i \
+                            -e "/### REST/a\ \       auth_basic_user_file ${PORTAL_REST_AUTH_FILE};" \
+                            -e "/location ~ ^\/index.psgi/a\ \           auth_basic \"Authentication Required\";"
+                        /etc/nginx/sites.available/portal.conf
             fi
         fi
 
         if var_true "${PORTAL_ENABLE_STATUS}" ; then
             allowed_status_portal=$(echo "${PORTAL_STATUS_ALLOWED_IPS}" | tr "," "\n" | uniq)
-            sed -i "/status {/a\ \ \      allow 127.0.0.1;" /etc/nginx/sites.available/portal.conf
+            sed -i \
+                        -e "/status {/a\ \ \      allow 127.0.0.1;"
+                    /etc/nginx/sites.available/portal.conf
             for allowed_host in $allowed_status_portal; do
-                sed -i "/allow status {/a\ \ \      allow ${allowed_host};" /etc/nginx/sites.available/portal.conf
+                sed -i \
+                            -e "/allow status {/a\ \ \      allow ${allowed_host};" \
+                        /etcf/nginx/sites.available/portal.conf
             done
         fi
 
@@ -369,6 +379,7 @@ llng_configure_test() {
     if var_true "${ENABLE_TEST}" ; then
         print_debug "Configuring Test Sites"
         nginx_site_enable test
+        sanity_var TEST_HOSTNAME "Test Hostname"
         update_template /etc/nginx/sites.available/test.conf \
                                                             NGINX_LISTEN_PORT \
                                                             NGINX_LOG_ACCESS_FORMAT \
@@ -386,6 +397,37 @@ llng_configure_webserver() {
                 -e "\#application/zip#a\ \ \ \ application/x-font-ttf ttf;" \
                 -e "\#application/zip#a\ \ \ \ font/opentype ott;" \
             /etc/nginx/mime.types
+}
+
+llng_logtype() {
+    case "${1,,}" in
+        "console")
+            echo "Lemonldap::NG::Common::Logger::Std"
+        ;;
+        "file" | "syslog" )
+            echo "Lemonldap::NG::Common::Logger::Syslog"
+        ;;
+        *)
+            echo "Lemonldap::NG::Common::Logger::Std"
+        ;;
+    esac
+}
+
+llng_translate_logLevel() {
+    case "${1,,}" in
+        "debug")
+            echo "DEBUG"
+        ;;
+        "error" | "notice" )
+            echo "ERROR"
+        ;;
+        "warn")
+            echo "WARN"
+        ;;
+        "info" | *)
+            echo "INFO"
+        ;;
+    esac
 }
 
 llng_setup_container_mode() {
@@ -451,44 +493,9 @@ ${config_manager}
 
 EOF
     else
-        print_warn "Manual Mode activated, you must make all changes to /etc/lemonldap-ng/lemonldap-ng.ini manually!"
+        print_warn "Manual Mode activated, you must make all changes to ${CONFIG_PATH}/lemonldap-ng.ini manually!"
     fi
 }
 
-### Logging Translation
-llng_logtype() {
-    case "${1,,}" in
-            "console")
-                echo "Lemonldap::NG::Common::Logger::Std"
-            ;;
-            "file" | "syslog" )
-                echo "Lemonldap::NG::Common::Logger::Syslog"
-            ;;
-           *)
-                echo "Lemonldap::NG::Common::Logger::Std"
-            ;;
-        esac
-}
 
-llng_translate_logLevel() {
-    case "${1,,}" in
-        "debug")
-            echo "DEBUG"
-        ;;
-        "error")
-            echo "ERROR"
-        ;;
-        "info")
-            echo "INFO"
-        ;;
-        "notice")
-            echo "ERROR"
-        ;;
-        "warn")
-            echo "WARN"
-        ;;
-        *)
-            echo "INFO"
-        ;;
-    esac
-}
+
