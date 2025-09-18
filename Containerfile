@@ -199,6 +199,8 @@ RUN echo "" && \
                     Digest::SHA \
                     Email::Sender \
                     GD::SecurityImage \
+                    GeoIP2 \
+                    HTTP::BrowserDetect \
                     HTTP::Headers \
                     HTTP::Request \
                     LWP::UserAgent \
