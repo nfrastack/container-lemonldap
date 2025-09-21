@@ -1,8 +1,10 @@
-## 2.1.0pre 2025-09-12 <code at nfrastack dot com>
+## 3.0.0beta 2025-09-12++ <code at nfrastack dot com>
 
     ### Added
        - Switched to nfastrack/nginx base image
        - Refactored image
+       - Switch to CSSO for minification on build
+       - Revamped Environment Variables
 
 ## 2.0.84 2025-09-12 <dave at tiredofit dot ca>
 

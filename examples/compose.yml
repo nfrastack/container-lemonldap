@@ -19,6 +19,7 @@ services:
       - MANAGER_HOSTNAME=manager.sso.example.com
       - PORTAL_HOSTNAME=sso.example.com
       - HANDLER_HOSTNAME=handler.sso.example.com
+      - TEST_HOSTNAME=test.sso.example.com
 
       - LOG_TYPE=FILE
       - LOG_LEVEL=debug
