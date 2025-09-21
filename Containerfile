@@ -147,6 +147,7 @@ RUN echo "" && \
                                 perl-net-cidr \
                                 perl-net-cidr-lite \
                                 perl-net-ssleay \
+                                perl-netaddr-ip \
                                 perl-plack \
                                 perl-regexp-common \
                                 perl-redis \
