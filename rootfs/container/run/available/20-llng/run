@@ -16,12 +16,11 @@ if var_true "${HANDLER_SOCKET_TCP_ENABLE}" ; then
 else
     _socket="-s /var/run/llng-fastcgi-server/llng-fastcgi.sock"
 fi
-set -x
-echo "${LOG_TYPE} LOG TYPE "
+
 if [ "${LOG_TYPE,,}" != "console" ] ; then
     silent_arg=silent
 fi
-set +x
+
 case "${HANDLER_PROCESSES,,}" in
     auto )
         HANDLER_PROCESSES=$(nproc)
@@ -40,10 +39,8 @@ liftoff
 
 
 print_start "Starting (${HANDLER_PROCESSES}) LemonLDAP FastCGI Server $(grep -o "ADD: LemonLDAP:NG v.* |" /container/build/${IMAGE_NAME/\//_}/build.log | awk '{print $3}') Handlers"
-set -x
 ${silent_arg} exec sudo -u "${NGINX_USER}" \
                                 /usr/local/bin/llng-fastcgi-server \
                                     ${_socket} \
                                     -n ${HANDLER_PROCESSES} \
                                     -foreground
-set +x

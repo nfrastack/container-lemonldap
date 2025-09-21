@@ -45,11 +45,11 @@ llng_bootstrap_configuration() {
 
     ### Modify File Configuration
     sudo -u "${NGINX_USER}" sed -i \
-                                    -e "s|auth.example.com|${PORTAL_HOSTNAME}|g" \
-                                    -e "s|manager.example.com|${MANAGER_HOSTNAME}|g" \
-                                    -e "s|reload.example.com|${HANDLER_HOSTNAME}|g" \
-                                    -e "s|test1.example.com|${TEST_HOSTNAME}|g" \
-                                    -e "s|example.com|${DOMAIN_NAME}|g" \
+                                    -e "s|auth.nfrastack.com|${PORTAL_HOSTNAME}|g" \
+                                    -e "s|manager.nfrastack.com|${MANAGER_HOSTNAME}|g" \
+                                    -e "s|reload.nfrastack.com|${HANDLER_HOSTNAME}|g" \
+                                    -e "s|test1.nfrastack.com|${TEST_HOSTNAME}|g" \
+                                    -e "s|nfrastack.com|${DOMAIN_NAME}|g" \
                                 ${CONFIG_GLOBAL_FILE_PATH}/lmConf-1.json
   fi
 }
@@ -165,7 +165,7 @@ EOF
         if [ -n "${HANDLER_LOG_TYPE}" ] ; then
             config_handler=$(cat<<EOF
 ${config_handler}
-logger                  = $(llng_logtype "$HANDLER_LOG_TYPE")
+logger              = $(llng_logtype "$HANDLER_LOG_TYPE")
 EOF
                             )
         fi
@@ -173,7 +173,7 @@ EOF
         if [ -n "${HANDLER_USER_LOG_TYPE}" ] ; then
             config_handler=$(cat<<EOF
 ${config_handler}
-userLogger              = $(llng_logtype "$HANDLER_LOG_TYPE")
+userLogger          = $(llng_logtype "$HANDLER_LOG_TYPE")
 EOF
                             )
         fi
@@ -181,7 +181,7 @@ EOF
         if var_true "${HANDLER_REDIRECT_ON_ERROR}" ;  then
             config_handler=$(cat<<EOF
 ${config_handler}
-useRedirectOnError      = 1
+useRedirectOnError  = 1
 EOF
                             )
         fi
@@ -189,7 +189,7 @@ EOF
         if var_true "${HANDLER_STATUS}" ;  then
             config_handler=$(cat<<EOF
 ${config_handler}
-status                  = 1
+status              = 1
 EOF
                             )
         fi
@@ -201,9 +201,9 @@ EOF
 llng_configure_logging() {
     print_debug "Configuring Logging"
     config_logging=$(cat<<EOF
-logLevel                = ${LOG_LEVEL}
-logger                  = $(llng_logtype "${LOG_TYPE}")
-userLogger              = $(llng_logtype "${LOG_TYPE}")
+logLevel    = ${LOG_LEVEL}
+logger      = $(llng_logtype "${LOG_TYPE}")
+userLogger  = $(llng_logtype "${LOG_TYPE}")
 EOF
                 )
 }
@@ -225,11 +225,11 @@ llng_configure_manager() {
 
         config_manager=$(cat<<EOF
 [manager]
-protection              = ${MANAGER_PROTECTION}
-languages               = ${MANAGER_LANGUAGE}
-enabledModules          = ${MANAGER_ENABLED_MODULES}
-staticPrefix            = ${MANAGER_STATIC_PREFIX}
-templateDir             = ${MANAGER_TEMPLATE_DIR}
+protection      = ${MANAGER_PROTECTION}
+languages       = ${MANAGER_LANGUAGE}
+enabledModules  = ${MANAGER_ENABLED_MODULES}
+staticPrefix    = ${MANAGER_STATIC_PREFIX}
+templateDir     = ${MANAGER_TEMPLATE_DIR}
 EOF
                         )
 

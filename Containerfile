@@ -186,6 +186,7 @@ RUN echo "" && \
     ln -s /usr/bin/perl /usr/local/bin/perl && \
     curl -L http://cpanmin.us -o /usr/bin/cpanm && \
     chmod +x /usr/bin/cpanm && \
+    cpanm -n Data::Validate::IP && \
     cpanm -n \
                 Apache::Session::Generate::MD5 \
                 Authen::Captcha \
@@ -316,6 +317,9 @@ RUN echo "" && \
     \
     mkdir -p /container/data/llng/conf && \
     mv /var/lib/lemonldap-ng/conf/* /container/data/llng/conf/ && \
+    sed -i \
+            -e "s|example.com|nfrastack.com|g" \
+            /container/data/llng/conf/*.json && \
     mv /etc/lemonldap-ng/lemonldap-ng.ini /container/data/llng/conf/ && \
     mkdir -p /container/data/llng/assets && \
     cp -aR \
