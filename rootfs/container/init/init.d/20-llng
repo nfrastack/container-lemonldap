@@ -5,7 +5,6 @@
 
 source /container/base/functions/container/init
 #source /container/base/defaults/*-monitoring
-#source /container/defaults/10-nginx
 prepare_service 10-nginx
 prepare_service 20-llng
 SERVICE_NAME="lemonldap-ng"
@@ -14,8 +13,7 @@ llng_bootstrap_filesystem
 llng_setup_container_mode
 llng_bootstrap_configuration
 llng_configure_configuration
-llng_configure_logging
-
+llng_configure_instance
 if var_true "${CONTAINER_ENABLE_FIREWALL}" && var_true "${CONTAINER_ENABLE_FAIL2BAN}" ; then llng_configure_fail2ban_llng ; fi
 llng_configure_api
 llng_configure_handler
@@ -24,7 +22,6 @@ llng_configure_portal
 llng_configure_test
 llng_write_config
 llng_configure_webserver
-llng_configure_socket
 
 chown -R "${NGINX_USER}":"${NGINX_GROUP}" "${DATA_PATH}"
 

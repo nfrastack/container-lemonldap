@@ -14,11 +14,11 @@ if [ "${LOG_TYPE,,}" = "console" ] ;  then
     service_stop "$(basename $0)"
 else
     create_logrotate lemonldap "${LOG_PATH}"/"${LOG_FILE}" lemonldap "${NGINX_USER}" "${NGINX_GROUP}"
-    create_logrotate lemonldap_user "${LOG_PATH}"/"${LOG_FILE_USER}" lemonldap "${NGINX_USER}" "${NGINX_GROUP}"
+    create_logrotate lemonldap_user "${LOG_PATH}"/"${LOG_USER_FILE}" lemonldap "${NGINX_USER}" "${NGINX_GROUP}"
     update_template /etc/rsyslog.conf \
                                     LOG_FILE \
-                                    LOG_FILE_USER \
-                                    LOG_PATH
+                                    LOG_PATH \
+                                    LOG_USER_FILE
 fi
 
 liftoff

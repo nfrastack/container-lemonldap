@@ -10,14 +10,7 @@ SERVICE_NAME="lemonldap-ng-handler"
 check_container_initialized
 check_service_initialized init
 
-### Check to see if Enabled/Disabled
-if var_true "${HANDLER_SOCKET_TCP_ENABLE}" ; then
-    _socket="-l 0.0.0.0:"${HANDLER_SOCKET_TCP_PORT}
-else
-    _socket="-s /var/run/llng-fastcgi-server/llng-fastcgi.sock"
-fi
-
-if [ "${LOG_TYPE,,}" != "console" ] ; then
+if [ "${LOG_TYPE,,}" != "console" ] || { [ -n "${HANDLER_LOG_TYPE}" ] && [ "${HANDLER_LOG_TYPE,,}" != "console" ]; }; then
     silent_arg=silent
 fi
 
@@ -34,6 +27,43 @@ case "${HANDLER_PROCESSES,,}" in
         liftoff
     ;;
 esac
+
+# Socket selection logic
+if [ -n "${HANDLER_SOCKET}" ]; then
+    if [[ "${HANDLER_SOCKET}" == unix:* ]]; then
+        _socket="-s ${HANDLER_SOCKET#unix:}"
+    elif [[ "${HANDLER_SOCKET}" == *:* ]]; then
+        port="${HANDLER_SOCKET##*:}"
+        _socket="-l 0.0.0.0:${port}"
+    else
+        _socket="-s ${HANDLER_SOCKET}"
+    fi
+else
+    case "${HANDLER_LISTEN_SOCKET_TYPE,,}" in
+        "path" | "unix" )
+            _socket="-s ${HANDLER_LISTEN_SOCKET_PATH}"
+        ;;
+        "tcp" )
+            _socket="-l 0.0.0.0:${HANDLER_LISTEN_SOCKET_TCP_PORT}"
+        ;;
+        "both" )
+            _socket="-s ${HANDLER_LISTEN_SOCKET_PATH} -l 0.0.0.0:${HANDLER_LISTEN_SOCKET_TCP_PORT}}"
+        ;;
+        *)
+            case "${DEFAULT_SOCKET_TYPE,,}" in
+                "path" | "unix" )
+                    _socket="-s ${DEFAULT_SOCKET_PATH}"
+                ;;
+                "both" )
+                    _socket="-s ${DEFAULT_SOCKET_PATH} -l 0.0.0.0:${DEFAULT_SOCKET_TCP_PORT}"
+                ;;
+                "tcp" | *)
+                    _socket="-l 0.0.0.0:${DEFAULT_SOCKET_TCP_PORT}"
+                ;;
+            esac
+        ;;
+    esac
+fi
 
 liftoff
 

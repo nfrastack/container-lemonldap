@@ -5,96 +5,155 @@
 llng_bootstrap_filesystem(){
     if [ "${SETUP_TYPE,,}" = "auto" ] ; then
         create_folder \
-                       "${CONFIG_INSTANCE_PATH},\
-                       ${CONFIG_GLOBAL_FILE_PATH},\
-                       ${SESSIONS_PERSISTENT_PATH}/lock,\
-                       ${SESSIONS_ACTIVE_PATH}/lock,\
-                       ${DATA_PATH},\
-                       ${DATA_PATH}/cache \
-                       ${LOG_PATH}" \
-                       "${NGINX_USER}:"${NGINX_GROUP} 755
+                            "${CONFIG_INSTANCE_PATH},\
+                            ${DATA_PATH},\
+                            ${LOG_PATH}" \
+                        "${NGINX_USER}":"${NGINX_GROUP}" 755
 
-        # Ensure /etc/lemonldap-ng/lemonldap-ng.ini is a symlink to the custom config file if needed
-        if { [ "${CONFIG_INSTANCE_PATH}" != "/etc/lemonldap-ng" ] && [ "${CONFIG_INSTANCE_PATH}" != "/etc/lemonldap-ng/" ]; } && [ "${CONFIG_INSTANCE_FILE}" != "lemonldap-ng.ini" ]; then
+        if [ "${CONFIG_INSTANCE_PATH%/}" != "/etc/lemonldap-ng" ] && [ "${CONFIG_INSTANCE_FILE}" != "lemonldap-ng.ini" ]; then
             mkdir -p /etc/lemonldap-ng
             ln -sf "${CONFIG_INSTANCE_PATH}/${CONFIG_INSTANCE_FILE}" /etc/lemonldap-ng/lemonldap-ng.ini
         fi
 
-        if [ "${DATA_PATH}" != "/var/lib/lemonldap-ng" ] && [ "${DATA_PATH}" != "/var/lib/lemonldap-ng/" ] && [ ! -L "/var/lib/lemonldap-ng" ] && [ ! -d "/var/lib/lemonldap-ng" ] ; then
+        if [ "${DATA_PATH%/}" != "/var/lib/lemonldap-ng" ] && [ ! -L "/var/lib/lemonldap-ng" ] && [ ! -d "/var/lib/lemonldap-ng" ] ; then
             ln -sf "${DATA_PATH}" /var/lib/lemonldap-ng
         fi
-    ## I think we need osme checks in here for the other paths if htye need to be symbolic linkjs like for example if we have data path as /var/lib/lemonldap-ng and config_global_path is different than conf
     else
         create_folder \
-                       "/etc/lemonldap-ng,\
-                       /var/lib/lemonldap-ng/cache,\
-                       /var/lib/lemonldap-ng/captcha,\
-                       /var/lib/lemonldap-ng/conf,
-                       /var/lib/lemonldap-ng/notifications,
-                       /var/lib/lemonldap-ng/psessions/lock \
-                       /var/lib/lemonldap-ng/sessions/lock \
-                       ${LOG_PATH}" \
-                       "${NGINX_USER}:"${NGINX_GROUP} 755
+                            "/etc/lemonldap-ng,\
+                            /var/lib/lemonldap-ng/cache,\
+                            /var/lib/lemonldap-ng/captcha,\
+                            /var/lib/lemonldap-ng/conf,
+                            /var/lib/lemonldap-ng/notifications,
+                            /var/lib/lemonldap-ng/psessions/lock \
+                            /var/lib/lemonldap-ng/sessions/lock \
+                            ${LOG_PATH}" \
+                        "${NGINX_USER}":"${NGINX_GROUP}" 755
     fi
 }
 
 llng_bootstrap_configuration() {
-  if [ ! "$(ls -A "${CONFIG_GLOBAL_FILE_PATH}"/)" ]; then
-    cp -aR /container/data/llng/conf/lmConf-1.json "${CONFIG_GLOBAL_FILE_PATH}"/
-    print_debug "Bootstrapping Initial Configuration"
+    local conf_dir="${CONFIG_GLOBAL_FILE_PATH}"
+    local conf_file="${conf_dir}/lmConf-1.json"
+    local target="${1,,}"
 
-    ### Modify File Configuration
-    sudo -u "${NGINX_USER}" sed -i \
-                                    -e "s|auth.nfrastack.com|${PORTAL_HOSTNAME}|g" \
-                                    -e "s|manager.nfrastack.com|${MANAGER_HOSTNAME}|g" \
-                                    -e "s|reload.nfrastack.com|${HANDLER_HOSTNAME}|g" \
-                                    -e "s|test1.nfrastack.com|${TEST_HOSTNAME}|g" \
-                                    -e "s|nfrastack.com|${DOMAIN_NAME}|g" \
-                                ${CONFIG_GLOBAL_FILE_PATH}/lmConf-1.json
-  fi
+    transform_var file DOMAIN_NAME
+    if dir_empty "${conf_dir}/" ; then
+        cp -aR /container/data/llng/conf/lmConf-1.json "${conf_dir}/"
+
+        print_debug "Bootstrapping Initial Configuration"
+
+        sanity_var DOMAIN_NAME "Domain Name eg example.com for writing to initial configuration file"
+        sudo -u "${NGINX_USER}" sed -i \
+                                            -e "s|nfrastack.com|${DOMAIN_NAME}|g" \
+                                        "${conf_file}"
+    fi
+
+    local file_count
+    file_count=$(find "${conf_dir}/" -type f | wc -l)
+    if [ "${file_count}" -eq 1 ] && [ -f "${conf_file}" ]; then
+        sanity_var DOMAIN_NAME "Domain Name eg example.com for writing to initial configuration file"
+        case "${target}" in
+            portal)
+                sudo -u "${NGINX_USER}" sed -i \
+                                                    -e "s|auth.${DOMAIN_NAME}|${PORTAL_HOSTNAME}|g" \
+                                                "${conf_file}"
+            ;;
+            manager)
+                sudo -u "${NGINX_USER}" sed -i \
+                                                    -e "s|manager.${DOMAIN_NAME}|${MANAGER_HOSTNAME}|g" \
+                                                "${conf_file}"
+            ;;
+            handler)
+                sudo -u "${NGINX_USER}" sed -i \
+                                                    -e "s|reload.${DOMAIN_NAME}|${HANDLER_HOSTNAME}|g" \
+                                                "${conf_file}"
+            ;;
+            test)
+                sudo -u "${NGINX_USER}" sed -i \
+                                                    -e "s|test1.${DOMAIN_NAME}|${TEST_HOSTNAME}|g" \
+                                                "${conf_file}"
+            ;;
+        esac
+    fi
 }
 
 llng_configure_configuration() {
     case "${CONFIG_GLOBAL_TYPE,,}" in
         "file" )
-            config_configuration=$(cat<<EOF
-type                                    = File
-dirName                                 = ${CONFIG_GLOBAL_FILE_PATH}
-localStorage                            = Cache::FileCache
-localStorageOptions_namespace           = ${CACHE_TYPE_FILE_NAMESPACE}
-localStorageOptions_default_expires_in  = ${CACHE_TYPE_FILE_EXPIRY}
-localStorageOptions_directory_umask     = ${CACHE_TYPE_FILE_DIR_MASK}
-localStorageOptions_cache_root          = ${CACHE_TYPE_FILE_PATH}
-localStorageOptions_cache_depth         = ${CACHE_TYPE_FILE_DEPTH}
-EOF
-                                )
-            echo "0 */12 * * * /usr/share/lemonldap-ng/bin/purgeCentralCache > /dev/null 2>&1" | silent tee /container/cron/lemonldap-purgecentralcache
-            echo "5 5 * * 6 ${NGINX_USER} /usr/share/lemonldap-ng/bin/rotateOidcKeys > /dev/null 2>&1" | silent tee /container/cron/lemonldap-rotateoidckeys
+            create_folder \
+                            "${CONFIG_GLOBAL_FILE_PATH}" \
+                            "${NGINX_USER}":"${NGINX_GROUP}" 755
+            truefalse_onezero CONFIG_GLOBAL_FILE_PRETTY_PRINT
+
+            local config_lines=(
+                "type                = File"
+                "dirName             = ${CONFIG_GLOBAL_FILE_PATH}"
+                "prettyPrint         = ${CONFIG_GLOBAL_FILE_PRETTY_PRINT}"
+                "confTimeout         = ${CONFIG_GLOBAL_CONFIG_TIMEOUT}"
+            )
+
+            case "${CONFIG_GLOBAL_CACHE_TYPE,,}" in
+                file )
+                    create_folder \
+                                    "${CONFIG_GLOBAL_CACHE_FILE_PATH}" \
+                                    "${NGINX_USER}":"${NGINX_GROUP}" 755
+                    config_lines+=("localStorage        = Cache::FileCache")
+                    config_lines+=("localStorageOptions = { \\")
+                    config_lines+=("                        'namespace'           => '${CONFIG_GLOBAL_CACHE_FILE_NAMESPACE}', \\")
+                    config_lines+=("                        'cache_root'          => '${CONFIG_GLOBAL_CACHE_FILE_PATH}', \\")
+                    config_lines+=("                        'directory_umask'     => '${CONFIG_GLOBAL_CACHE_FILE_DIR_MASK}', \\")
+                    config_lines+=("                        'cache_depth'         => ${CONFIG_GLOBAL_CACHE_FILE_DEPTH}, \\")
+                    config_lines+=("                        'default_expires_in'  => ${CONFIG_GLOBAL_CACHE_FILE_EXPIRY}, \\")
+                    config_lines+=("                      }")
+                ;;
+                none )
+                    :
+                ;;
+            esac
+
+            config_configuration=$(printf "%s\n" "${config_lines[@]}")
         ;;
         "rest" )
             transform_var file \
-                                REST_HOST \
-                                REST_PASS \
-                                REST_USER
+                                CONFIG_GLOBAL_REST_HOST \
+                                CONFIG_GLOBAL_REST_PASS \
+                                CONFIG_GLOBAL_REST_USER
 
-
-            config_configuration=$(cat<<EOF
-type = REST
-baseUrl = ${REST_HOST}
-User = ${REST_USER}
-Password = ${REST_PASS}
-EOF
-                        )
-            echo "1 * * * * /usr/share/lemonldap-ng/bin/purgeLocalCache  > /dev/null 2>&1" silent tee /container/cron/lemonldap-purgelocalcache
+            local config_lines=(
+                "type       = REST"
+                "baseUrl    = ${CONFIG_GLOBAL_REST_HOST}"
+                "User       = ${CONFIG_GLOBAL_REST_USER}"
+                "Password   = ${CONFIG_GLOBAL_REST_PASS}"
+            )
+            config_configuration=$(printf "%s\n" "${config_lines[@]}")
         ;;
     esac
+
+    if var_false "${CONFIG_GLOBAL_SCHEDULE_PURGE_LOCAL_CACHE}"; then
+        print_debug "Disabling Scheduled Central Cache Purge"
+    else
+        echo "${CONFIG_GLOBAL_SCHEDULE_PURGE_LOCAL_CACHE} ${NGINX_USER} /usr/share/lemonldap-ng/bin/purgeLocalCache  > /dev/null 2>&1" | silent tee /container/cron/lemonldap-purgelocalcache
+    fi
+
+    if var_false "${CONFIG_GLOBAL_SCHEDULE_PURGE_CENTRAL_CACHE}"; then
+        print_debug "Disabling Scheduled Central Cache Purge"
+    else
+        echo "${CONFIG_GLOBAL_SCHEDULE_PURGE_CENTRAL_CACHE} ${NGINX_USER} /usr/share/lemonldap-ng/bin/purgeCentralCache > /dev/null 2>&1" | silent tee /container/cron/lemonldap-purgecentralcache
+    fi
+
+    if var_false "${CONFIG_GLOBAL_SCHEDULE_ROTATE_OIDC_KEYS}"; then
+        print_debug "Disabling Scheduled Rotation of OIDC Keys"
+    else
+        echo  "${CONFIG_GLOBAL_SCHEDULE_ROTATE_OIDC_KEYS} ${NGINX_USER} /usr/share/lemonldap-ng/bin/rotateOidcKeys > /dev/null 2>&1" | silent tee /container/cron/lemonldap-rotateoidckeys
+    fi
 }
 
 llng_configure_fail2ban_llng() {
     source /container/base/*/07-firewall
     create_folder \
                     "${NGINX_LOG_ERROR_LOCATION}" \
-                    ${NGINX_USER}:${NGINX_GROUP} 755
+                    "${NGINX_USER}":"${NGINX_GROUP}" 755
     sudo -u "${NGINX_USER}" "${NGINX_LOG_ERROR_LOCATION}"/error-handler.log
     cat <<EOF | silent tee "${FAIL2BAN_CONFIG_PATH}"/jail.d/llng.conf
 [llng]
@@ -111,19 +170,26 @@ EOF
 llng_configure_api() {
     if var_true "${ENABLE_API}" ; then
         print_debug "Configuring Manager API"
-        nginx_site_enable 04-api
+        transform_var file \
+                            API_ALLOWED_IPS \
+                            API_HOSTNAME \
+                            API_SOCKET
         sanity_var API_HOSTNAME "API Hostname"
+        llng_bootstrap_configuration api
+        llng_configure_socket api
+        nginx_site_enable 04-api
         update_template /etc/nginx/sites.available/04-api.conf \
-                                                            API_HOSTNAME \
-                                                            NGINX_LISTEN_PORT \
-                                                            NGINX_LOG_ACCESS_FORMAT \
-                                                            NGINX_LOG_ACCESS_LOCATION \
-                                                            NGINX_LOG_ERROR_LOCATION
+                                                                API_HOSTNAME \
+                                                                MANAGER_TEMPLATE_PATH \
+                                                                NGINX_LISTEN_PORT \
+                                                                NGINX_LOG_ACCESS_FORMAT \
+                                                                NGINX_LOG_ACCESS_LOCATION \
+                                                                NGINX_LOG_ERROR_LOCATION
 
         create_logrotate nginx_lemonldap-manager_api "${NGINX_LOG_ACCESS_LOCATION}"/access-api.log nginx-"${NGINX_LOG_ACCESS_FORMAT}" "${NGINX_USER}" "${NGINX_GROUP}"
         create_logrotate nginx_lemonldap-manager_api "${NGINX_LOG_ACCESS_LOCATION}"/error-api.log nginx-error-standard,nginx-error-alt-standard "${NGINX_USER}" "${NGINX_GROUP}"
 
-        api_allowed=$(echo "${MANAGER_API_ALLOWED_IPS}" | tr "," "\n" | uniq)
+        api_allowed=$(echo "${API_ALLOWED_IPS}" | tr "," "\n" | uniq)
         for allowed_host in ${api_allowed}; do
             print_debug "API - Allowing ${allowed_host} to access"
             sed -i "/allow 127.0.0.1/a\ \ \          allow ${allowed_host};" /etc/nginx/sites.available/04-api.conf
@@ -135,141 +201,159 @@ llng_configure_api() {
 llng_configure_handler() {
     if var_true "${ENABLE_HANDLER}" ; then
         print_debug "Configuring Handler"
-        nginx_site_enable 01-handler
-        update_template /etc/nginx/sites.available/01-handler.conf \
-                                                            HANDLER_HOSTNAME \
-                                                            NGINX_LISTEN_PORT \
-                                                            NGINX_LOG_ACCESS_FORMAT \
-                                                            NGINX_LOG_ACCESS_LOCATION \
-                                                            NGINX_LOG_ERROR_LOCATION
+        transform_var file \
+                            HANDLER_ALLOWED_IPS \
+                            HANDLER_HOSTNAME \
+                            HANDLER_LISTEN_SOCKET_TCP_PORT \
+                            HANDLER_LISTEN_SOCKET_PATH \
+                            HANDLER_SOCKET
+        llng_configure_socket handler
+        if var_true "${HANDLER_ENABLE_NGINX}" ; then
+            sanity_var HANDLER_HOSTNAME "Handler Hostname"
+            llng_bootstrap_configuration handler
+            nginx_site_enable 01-handler
+            update_template /etc/nginx/sites.available/01-handler.conf \
+                                                                        HANDLER_HOSTNAME \
+                                                                        NGINX_LISTEN_PORT \
+                                                                        NGINX_LOG_ACCESS_FORMAT \
+                                                                        NGINX_LOG_ACCESS_LOCATION \
+                                                                        NGINX_LOG_ERROR_LOCATION
 
-        create_logrotate nginx_lemonldap-handler_accesss "${NGINX_LOG_ACCESS_LOCATION}"/access-handler.log nginx-"${NGINX_LOG_ACCESS_FORMAT}" "${NGINX_USER}" "${NGINX_GROUP}"
-        create_logrotate nginx_lemonldap-handler_error "${NGINX_LOG_ACCESS_LOCATION}"/error-handler.log nginx-error-standard,nginx-error-alt-standard "${NGINX_USER}" "${NGINX_GROUP}"
+            create_logrotate nginx_lemonldap-handler_accesss "${NGINX_LOG_ACCESS_LOCATION}"/access-handler.log nginx-"${NGINX_LOG_ACCESS_FORMAT}" "${NGINX_USER}" "${NGINX_GROUP}"
+            create_logrotate nginx_lemonldap-handler_error "${NGINX_LOG_ACCESS_LOCATION}"/error-handler.log nginx-error-standard,nginx-error-alt-standard "${NGINX_USER}" "${NGINX_GROUP}"
 
-        if [ "${CONFIG_TYPE,,}" = "rest" ] ; then
-            sed -i "s|lmremote_user|remote_user|g" /etc/nginx/nginx.conf
+            #if [ "${CONFIG_GLOBAL_TYPE,,}" = "rest" ] ; then
+            #    sed -i "s|lmremote_user|remote_user|g" /etc/nginx/nginx.conf
+            #fi
+
+            handler_allowed=$(echo "${HANDLER_ALLOWED_IPS}" | tr "," "\n" | uniq)
+            for allowed_host in $handler_allowed; do
+                sed -i "/allow 127.0.0.1/a\ \ \         allow ${allowed_host};" /etc/nginx/sites.available/01-handler.conf
+            done
+
+            echo "127.0.0.1 ${HANDLER_HOSTNAME}" | silent tee -a /etc/hosts
         fi
 
-        handler_allowed=$(echo "${HANDLER_ALLOWED_IPS}" | tr "," "\n" | uniq)
-        for allowed_host in $handler_allowed; do
-            sed -i "/allow 127.0.0.1/a\ \ \         allow ${allowed_host};" /etc/nginx/sites.available/01-handler.conf
-        done
+        local handler_lines=("[handler]")
+        [ -n "${HANDLER_LOG_TYPE}" ]            && handler_lines+=("logger              = $(llng_logtype "$HANDLER_LOG_TYPE")")
+        [ -n "${HANDLER_LOG_USER_TYPE}" ]       && handler_lines+=("userLogger          = $(llng_logtype "$HANDLER_LOG_TYPE")")
+        [ -n "${HANDLER_LOG_LEVEL}" ]           && handler_lines+=("logLevel            = ${HANDLER_LOG_LEVEL}")
+        var_true "${HANDLER_REDIRECT_ON_ERROR}" && handler_lines+=("useRedirectOnError  = 1")
+        var_true "${HANDLER_STATUS}"            && handler_lines+=("status              = 1")
 
-        ### Add Entry to hosts
-        echo "127.0.0.1 ${HANDLER_HOSTNAME}" >> /etc/hosts
-        config_handler=$(cat<<EOF
-[handler]
-EOF
-                        )
+        case "${HANDLER_CACHE_TYPE,,}" in
+            file )
+                handler_lines+=("localStorage            = Cache::FileCache")
+                handler_lines+=("localStorageOptions     =  { \\")
+                handler_lines+=("                               'namespace'           => '${HANDLER_CACHE_FILE_NAMESPACE}' \\,")
+                handler_lines+=("                               'cache_root'          => '${HANDLER_CACHE_FILE_PATH}'      \\,")
+                handler_lines+=("                               'directory_umask'     => '${HANDLER_CACHE_FILE_DIR_MASK}'  \\,")
+                handler_lines+=("                               'cache_depth'         => ${HANDLER_CACHE_FILE_DEPTH}       \\,")
+                handler_lines+=("                               'default_expires_in'  => ${HANDLER_CACHE_FILE_EXPIRY}      \\,")
+                handler_lines+=("                           }")
+            ;;
+        esac
 
-        if [ -n "${HANDLER_LOG_TYPE}" ] ; then
-            config_handler=$(cat<<EOF
-${config_handler}
-logger              = $(llng_logtype "$HANDLER_LOG_TYPE")
-EOF
-                            )
-        fi
-
-        if [ -n "${HANDLER_USER_LOG_TYPE}" ] ; then
-            config_handler=$(cat<<EOF
-${config_handler}
-userLogger          = $(llng_logtype "$HANDLER_LOG_TYPE")
-EOF
-                            )
-        fi
-
-        if var_true "${HANDLER_REDIRECT_ON_ERROR}" ;  then
-            config_handler=$(cat<<EOF
-${config_handler}
-useRedirectOnError  = 1
-EOF
-                            )
-        fi
-
-        if var_true "${HANDLER_STATUS}" ;  then
-            config_handler=$(cat<<EOF
-${config_handler}
-status              = 1
-EOF
-                            )
-        fi
+        config_handler=$(printf "%s\n" "${handler_lines[@]}")
     else
         service_stop 20-llng
     fi
 }
 
-llng_configure_logging() {
+llng_configure_instance() {
     print_debug "Configuring Logging"
-    config_logging=$(cat<<EOF
-logLevel    = ${LOG_LEVEL}
-logger      = $(llng_logtype "${LOG_TYPE}")
-userLogger  = $(llng_logtype "${LOG_TYPE}")
-EOF
-                )
+    local all_lines=(
+        "logLevel    = ${LOG_LEVEL}"
+        "logger      = $(llng_logtype "${LOG_TYPE}")"
+        "userLogger  = $(llng_logtype "${LOG_TYPE}")"
+        "checkTime   = ${CONFIG_CHECK_INTERVAL}"
+    )
+
+    var_true "${CONFIG_USE_SAFE_JAIL}"          && all_lines+=("useSafeJail = 1")
+    var_true "${CONFIG_ENABLE_CROSS_DOMAIN}"    && all_lines+=("cda         = 1")
+    config_all=$(printf "%s\n" "${all_lines[@]}")
 }
 
 llng_configure_manager() {
     if var_true "${ENABLE_MANAGER}" ; then
         print_debug "Configuring Manager"
+        transform_var file \
+                            MANAGER_HOSTNAME \
+                            MANAGER_SOCKET \
+                            MANAGER_CUSTOM_PORTAL_URL \
+                            MANAGER_ENABLED_MODULES \
+                            MANAGER_INSTANCE_NAME \
+                            MANAGER_PROTECTION \
+                            MANAGER_VIEWER_HIDDEN_KEYS \
+                            MANAGER_VIEWER_ALLOW_BROWSE \
+                            MANAGER_VIEWER_ALLOW_DIFF
         sanity_var MANAGER_HOSTNAME "Manager Hostname"
+        llng_bootstrap_configuration manager
+        llng_configure_socket manager
         nginx_site_enable 03-manager
         update_template /etc/nginx/sites.available/03-manager.conf \
-                                                            MANAGER_HOSTNAME \
-                                                            NGINX_LISTEN_PORT \
-                                                            NGINX_LOG_ACCESS_FORMAT \
-                                                            NGINX_LOG_ACCESS_LOCATION \
-                                                            NGINX_LOG_ERROR_LOCATION
+                                                                    MANAGER_HOSTNAME \
+                                                                    MANAGER_TEMPLATE_PATH \
+                                                                    NGINX_LISTEN_PORT \
+                                                                    NGINX_LOG_ACCESS_FORMAT \
+                                                                    NGINX_LOG_ACCESS_LOCATION \
+                                                                    NGINX_LOG_ERROR_LOCATION
 
         create_logrotate nginx_lemonldap-manager_accesss "${NGINX_LOG_ACCESS_LOCATION}"/access-manager.log nginx-"${NGINX_LOG_ACCESS_FORMAT}" "${NGINX_USER}" "${NGINX_GROUP}"
         create_logrotate nginx_lemonldap-manager_error "${NGINX_LOG_ACCESS_LOCATION}"/error-manager.log nginx-error-standard,nginx-error-alt-standard "${NGINX_USER}" "${NGINX_GROUP}"
 
-        config_manager=$(cat<<EOF
-[manager]
-protection      = ${MANAGER_PROTECTION}
-languages       = ${MANAGER_LANGUAGE}
-enabledModules  = ${MANAGER_ENABLED_MODULES}
-staticPrefix    = ${MANAGER_STATIC_PREFIX}
-templateDir     = ${MANAGER_TEMPLATE_DIR}
-EOF
-                        )
+        llng_override_path "/usr/share/lemonldap-ng/manager/static/css" "${MANAGER_CSS_PATH%/}" "/container/data/llng/assets/manager/static/css" "$NGINX_USER" "${NGINX_GROUP}" 755
+        llng_override_path "/usr/share/lemonldap-ng/manager/static/logos" "${MANAGER_LOGOS_PATH%/}" "/container/data/llng/assets/manager/static/logos" "$NGINX_USER" "${NGINX_GROUP}" 755
+        llng_override_path "/usr/share/lemonldap-ng/manager/static/languages" "${MANAGER_LANGUAGE_PATH%/}" "/container/data/llng/assets/manager/static/languages" "$NGINX_USER" "${NGINX_GROUP}" 755
+        llng_override_path "/usr/share/lemonldap-ng/manager/templates" "${MANAGER_TEMPLATE_PATH%/}" "/container/data/llng/assets/maanger/templates" "$NGINX_USER" "${NGINX_GROUP}" 755
 
-        if [ -n "${MANAGER_LOG_TYPE}" ] ; then
-            config_manager=$(cat<<EOF
-${config_manager}
-logger          = $(llng_logtype "$MANAGER_LOG_TYPE")
-EOF
-                            )
-        fi
+        local config_lines=(
+            "[manager]"
+            "protection          = ${MANAGER_PROTECTION}"
+            "enabledModules      = ${MANAGER_ENABLED_MODULES}"
+            "defaultModule       = viewer"
+            "viewerHiddenKeys    = ${MANAGER_VIEWER_HIDDEN_KEYS}"
+            "viewerAllowBrowser  = ${MANAGER_VIEWER_ALLOW_BROWSE}"
+            "viewerAllowDiff     = ${MANAGER_VIEWER_ALLOW_DIFF}"
+            "languages           = ${MANAGER_LANGUAGE}"
+            "staticPrefix        = ${MANAGER_STATIC_PREFIX}"
+            "templateDir         = ${MANAGER_TEMPLATE_PATH}"
+        )
 
-        if [ -n "${MANAGER_USER_LOG_TYPE}" ] ; then
-            config_manager=$(cat<<EOF
-${config_manager}
-userLogger      = $(llng_logtype "$MANAGER_USER_LOG_TYPE")
-EOF
-                            )
-        fi
+        [ -n "${MANAGER_INSTANCE_NAME}" ]      && config_lines+=("instanceName    = ${MANAGER_INSTANCE_NAME}")
+        [ -n "${MANAGER_CUSTOM_CSS_FILE}" ]    && config_lines+=("customCSS       = ${MANAGER_CUSTOM_CSS_FILE}")
+        [ -n "${MANAGER_CUSTOM_PORTAL_URL}" ]  && config_lines+=("customPortalUrl = ${MANAGER_CUSTOM_PORTAL_URL}")
+        [ -n "${MANAGER_LOG_TYPE}" ]           && config_lines+=("logger          = $(llng_logtype "${MANAGER_LOG_TYPE}")")
+        [ -n "${MANAGER_LOG_USER_TYPE}" ]      && config_lines+=("userLogger      = $(llng_logtype "$MANAGER_LOG_USER_TYPE")")
+        [ -n "${MANAGER_LOG_LEVEL}" ]          && config_lines+=("logLevel        = ${MANAGER_LOG_LEVEL}")
 
-        if [ -n "${MANAGER_LOG_LEVEL}" ] ; then
-            config_manager=$(cat<<EOF
-${config_manager}
-logLevel        = ${MANAGER_LOG_LEVEL}
-EOF
-                            )
-        fi
+        config_manager=$(printf "%s\n" "${config_lines[@]}")
     fi
 }
 
 llng_configure_portal() {
     if var_true "${ENABLE_PORTAL}" ; then
         print_debug "Configuring Portal"
-        nginx_site_enable 02-portal
+        transform_var file \
+                            PORTAL_HOSTNAME \
+                            PORTAL_SOCKET \
+                            PORTAL_IMPERSONATE_HOSTNAME \
+                            PORTAL_IMPERSONATE_THEME \
+                            PORTAL_ENABLE_REST \
+                            PORTAL_REST_ALLOWED_IPS \
+                            PORTAL_REST_AUTH_FILE
         sanity_var PORTAL_HOSTNAME "Portal Hostname"
+        llng_bootstrap_configuration portal
+        llng_configure_socket portal
+        nginx_site_enable 02-portal
         update_template /etc/nginx/sites.available/02-portal.conf \
-                                                            NGINX_LISTEN_PORT \
-                                                            NGINX_LOG_ACCESS_FORMAT \
-                                                            NGINX_LOG_ACCESS_LOCATION \
-                                                            NGINX_LOG_ERROR_LOCATION \
-                                                            PORTAL_HOSTNAME
+                                                                    NGINX_LISTEN_PORT \
+                                                                    NGINX_LOG_ACCESS_FORMAT \
+                                                                    NGINX_LOG_ACCESS_LOCATION \
+                                                                    NGINX_LOG_ERROR_LOCATION \
+                                                                    PORTAL_HOSTNAME \
+                                                                    PORTAL_STATIC_PATH \
+                                                                    PORTAL_TEMPLATES_PATH
 
         if var_false "${PORTAL_ENABLE_GITLAB_OAUTH}" ; then
             sed -i "/rewrite \^\/oauth2\/gitlab/d" /etc/nginx/sites.available/02-portal.conf
@@ -278,41 +362,40 @@ llng_configure_portal() {
         create_logrotate nginx_lemonldap-portal_accesss "${NGINX_LOG_ACCESS_LOCATION}"/access-portal.log nginx-"${NGINX_LOG_ACCESS_FORMAT}" "${NGINX_USER}" "${NGINX_GROUP}"
         create_logrotate nginx_lemonldap-portal_error "${NGINX_LOG_ACCESS_LOCATION}"/error-portal.log nginx-error-standard,nginx-error-alt-standard "${NGINX_USER}" "${NGINX_GROUP}"
 
-    ### Impersonation Theme Setup
-        if var_true "${ENABLE_IMPERSONATION}" ; then
-            sanity_var IMPERSONATE_HOSTNAME "Impersonation Hostname"
-            sanity_var IMPERSONATE_THEME "Impersonation Theme"
+        if var_true "${PORTAL_ENABLE_IMPERSONATION}" ; then
+            sanity_var PORTAL_IMPERSONATE_HOSTNAME "Impersonation Hostname"
+            sanity_var PORTAL_IMPERSONATE_THEME "Impersonation Theme"
 
-            cat <<EOF | silent tee /etc/nginx/sites.available/impersonate.conf
+            cat <<EOF | silent tee /etc/nginx/sites.available/06-impersonate.conf
 server {
     listen ${NGINX_LISTEN_PORT};
-    server_name ${IMPERSONATE_HOSTNAME};
+    server_name ${PORTAL_IMPERSONATE_HOSTNAME};
     access_log ${NGINX_LOG_ACCESS_LOCATION}/access-impersonate.log ${NGINX_LOG_ACCESS_FORMAT,,};
     error_log ${NGINX_LOG_ACCESS_LOCATION}/error-impersonate.log;
-    return 302 \$scheme://${IMPERSONATE_REDIRECT_HOSTNAME}/?skin=${IMPERSONATE_THEME};
+    return 302 \$scheme://${PORTAL_HOSTNAME}/?skin=${PORTAL_IMPERSONATE_THEME};
 }
 EOF
-        nginx_site_enable impersonate
+        nginx_site_enable 06-impersonate
         create_logrotate nginx_lemonldap-impersonate_accesss "${NGINX_LOG_ACCESS_LOCATION}"/access-impersonate.log nginx-"${NGINX_LOG_ACCESS_FORMAT}" "${NGINX_USER}" "${NGINX_GROUP}"
         create_logrotate nginx_lemonldap-impersonate_error "${NGINX_LOG_ACCESS_LOCATION}"/error-impersonate.log nginx-error-standard,nginx-error-alt-standard "${NGINX_USER}" "${NGINX_GROUP}"
         fi
 
-        ### REST Remote Access
         if var_true "${PORTAL_ENABLE_REST}" ; then
-            sed -i "/deny all;/i\ \ \    allow 127.0.0.1;" /etc/nginx/sites.available/portal.conf
+            sed -i "/deny all;/i\ \ \    allow 127.0.0.1;" /etc/nginx/sites.available/02-portal.conf
             allowed_rest_portal=$(echo "${PORTAL_REST_ALLOWED_IPS}" | tr "," "\n" | uniq)
             for allowed_host in $allowed_rest_portal; do
-                sed -i "/allow 127.0.0.1/a\ \ \      allow ${allowed_host};" /etc/nginx/sites.available/portal.conf
+                sed -i "/allow 127.0.0.1/a\ \ \      allow ${allowed_host};" /etc/nginx/sites.available/02-portal.conf
             done
 
             portal_rest_users=$(printenv | sort | grep -c '^PORTAL_REST_USER.*')
             for ((i = 01; i <= portal_rest_users; i++)); do
+                i=$(printf "%02d" $i)
                 transform_var file \
                                     PORTAL_REST_USER${i}
                                     PORTAL_REST_PASS${i}
                 portal_rest_user=PORTAL_REST_USER${i}
                 portal_rest_pass=PORTAL_REST_PASS${i}
-                print_debug "Creating REST User: ${!portal_rest_user}"
+                print_debug "[configure_portal] Creating REST User: ${!portal_rest_user}"
                 htpasswd -b -n ${!portal_rest_user:-$PORTAL_REST_USER} ${!portal_rest_pass:-$PORTAL_REST_PASS} | silent tee "${PORTAL_REST_AUTH_FILE}"
             done
 
@@ -328,75 +411,179 @@ EOF
                 sed -i \
                             -e "/### REST/a\ \       auth_basic_user_file ${PORTAL_REST_AUTH_FILE};" \
                             -e "/location ~ ^\/index.psgi/a\ \           auth_basic \"Authentication Required\";"
-                        /etc/nginx/sites.available/portal.conf
+                        /etc/nginx/sites.available/02-portal.conf
             fi
         fi
 
-        llng_override_path "/usr/share/lemonldap-ng/portal/icons" "${PORTAL_ICONS_PATH}" "/container/data/llng/assets/icons" "$NGINX_USER" "${NGINX_GROUP}" 755
-        llng_override_path "/usr/share/lemonldap-ng/portal/apps" "${PORTAL_APPS_PATH}" "/container/data/llng/assets/apps" "$NGINX_USER" "${NGINX_GROUP}" 755
-        llng_override_path "/usr/share/lemonldap-ng/portal/logos" "${PORTAL_LOGOS_PATH}" "/container/data/llng/assets/logos" "$NGINX_USER" "${NGINX_GROUP}" 755
-        llng_override_path "/usr/share/lemonldap-ng/portal/static/languages" "${PORTAL_LANGUAGE_PATH}" "/container/data/llng/assets/languages" "$NGINX_USER" "${NGINX_GROUP}" 755
+        llng_override_path "/usr/share/lemonldap-ng/portal/static/common/icons" "${PORTAL_ICONS_PATH%/}" "/container/data/llng/assets/portal/static/common/icons" "$NGINX_USER" "${NGINX_GROUP}" 755
+        llng_override_path "/usr/share/lemonldap-ng/portal/static/common/apps" "${PORTAL_APPS_PATH%/}" "/container/data/llng/assets/portal/static/common/apps" "$NGINX_USER" "${NGINX_GROUP}" 755
+        llng_override_path "/usr/share/lemonldap-ng/portal/static/common/logos" "${PORTAL_LOGOS_PATH%/}" "/container/data/llng/assets/portal/static/common/logos" "$NGINX_USER" "${NGINX_GROUP}" 755
+        llng_override_path "/usr/share/lemonldap-ng/portal/static/languages" "${PORTAL_LANGUAGE_PATH%/}" "/container/data/llng/assets/portal/static/languages" "$NGINX_USER" "${NGINX_GROUP}" 755
+        llng_override_path "/usr/share/lemonldap-ng/portal/templates" "${PORTAL_TEMPLATES_PATH%/}" "/container/data/llng/assets/portal/templates" "$NGINX_USER" "${NGINX_GROUP}" 755
 
-        config_portal=$(cat<<EOF
-[portal]
-languages                           = ${PORTAL_LANGUAGE}
-staticPrefix                        = ${PORTAL_STATIC_PREFIX}
-templateDir                         = ${PORTAL_TEMPLATE_DIR}
-globalStorage                       = Apache::Session::File
-globalStorageOptions_Directory      = ${SESSIONS_ACTIVE_PATH}/
-globalStorageOptions_LockDirectory  = ${SESSIONS_ACTIVE_PATH}/lock/
-EOF
-                        )
+        for tvar in $(set -o posix; env | grep '^PORTAL_TEMPLATE_.*_PATH=.*$' | grep -vE 'BOOTSTRAP|COMMON|_STATIC_PATH=' | awk -F= '{print $1}'); do
+            t_name=$(echo "${tvar}" | sed -E 's|^PORTAL_TEMPLATE_(.*)_PATH$|\1|' | tr '[:upper:]' '[:lower:]')
+            t_path=$(eval echo "\$${tvar}")
+            t_dir="${PORTAL_TEMPLATES_PATH%/}/${t_name}"
 
-        if [ -n "${PORTAL_LOG_TYPE}" ] ; then
-            config_portal=$(cat<<EOF
-${config_portal}
-logger                  = $(llng_logtype "$PORTAL_LOG_TYPE")
-EOF
-                            )
+            if [ -n "${t_name}" ]; then
+                ptp_norm=$(realpath "${PORTAL_TEMPLATES_PATH%/}")
+                tpath_norm=$(realpath "${t_path}")
+
+                if [ ! -d "${t_path}" ]; then
+                    print_warn "[configure_portal] Template '${t_name}' path '${t_path}' does not exist, skipping."
+                elif [[ "${tpath_norm}" == "${ptp_norm}"* ]]; then
+                    print_warn "[configure_portal] Template '${t_name}' path '${t_path}' is inside or same as PORTAL_TEMPLATES_PATH, skipping."
+                else
+                    if [ ! -d "${t_dir}" ] || dir_empty "${t_dir}" ; then
+                        print_notice "[configure_portal] Template '${t_name}' creating link override for '${t_dir}' to '${t_path}'"
+                        rm -rf "${t_dir}"
+                        ln -s "${t_path}" "${t_dir}"
+                    else
+                        print_warn "[configure_portal] Template '${t_name}' skipping link override for '${t_dir}': directory exists and is not empty."
+                    fi
+                fi
+            fi
+        done
+
+        for svar in $(set -o posix; env | grep '^PORTAL_TEMPLATE_.*_STATIC_PATH=.*$' | grep -vE 'BOOTSTRAP|COMMON' | awk -F= '{print $1}'); do
+            s_name=$(echo "${svar}" | sed -E 's|^PORTAL_TEMPLATE_(.*)_STATIC_PATH$|\1|' | tr '[:upper:]' '[:lower:]')
+            s_path=$(eval echo "\$${svar}")
+            s_dir="${PORTAL_STATIC_PATH%/}/static/${s_name}/"
+
+            if [ -n "${s_name}" ]; then
+                stp_norm=$(realpath "${PORTAL_STATIC_PATH%/}")
+                spath_norm=$(realpath "${s_path}")
+
+                if [ ! -d "${s_path}" ]; then
+                    print_warn "[configure_portal] Static path for template '${s_name}' (${s_path}) does not exist, skipping."
+                elif [[ "${spath_norm}" == "${stp_norm}"* ]]; then
+                    print_warn "[configure_portal] Static path for template '${s_name}' (${s_path}) is inside or same as PORTAL_TEMPLATES_PATH, skipping."
+                else
+                    if [ ! -d "${s_dir}" ] || dir_empty "${s_dir}" ; then
+                        print_notice "[configure_portal] Static path for template '${s_name}' creating link override for '${s_dir}' to '${s_path}'"
+                        rm -rf "${s_dir}"
+                        ln -s "${s_path}" "${s_dir}"
+                    else
+                        print_warn "[configure_portal] Static path for template '${s_name}' skipping link override for '${s_dir}': directory exists and is not empty."
+                    fi
+                fi
+            fi
+        done
+
+        if var_true "${PORTAL_ENABLE_CAPTCHA}" ; then
+            create_folder   \
+                                "${PORTAL_CAPTCHA_PATH}" \
+                            "${NGINX_USER}":"${NGINX_GROUP}" 755
         fi
 
-        if [ -n "${PORTAL_USER_LOG_TYPE}" ] ; then
-            config_portal=$(cat<<EOF
-${config_portal}
-userLogger              = $(llng_logtype "$PORTAL_USER_LOG_TYPE")
-EOF
-                            )
+        local portal_lines=(
+            "[portal]"
+            "languages                   = ${PORTAL_LANGUAGE}"
+            "staticPrefix                = ${PORTAL_STATIC_PREFIX}"
+            "templateDir                 = ${PORTAL_TEMPLATES_PATH}"
+        )
+
+        [ -n "${PORTAL_LOG_TYPE}" ]      && portal_lines+=("logger                      = $(llng_logtype "$PORTAL_LOG_TYPE")")
+        [ -n "${PORTAL_LOG_USER_TYPE}" ] && portal_lines+=("userLogger                  = $(llng_logtype "$PORTAL_LOG_USER_TYPE")")
+        [ -n "${PORTAL_LOG_LEVEL}" ]     && portal_lines+=("logLevel                    = ${PORTAL_LOG_LEVEL}")
+
+        case "${PORTAL_SESSIONS_ACTIVE_TYPE,,}" in
+            "file" )
+                portal_lines+=("globalStorage               = Apache::Session::File")
+                portal_lines+=("globalStorageOptions        = { \\")
+                portal_lines+=("                                'Directory'      => '${PORTAL_SESSIONS_ACTIVE_PATH}/', \\")
+                portal_lines+=("                                'LockDirectory'  => '${PORTAL_SESSIONS_ACTIVE_PATH}/lock/', \\")
+                portal_lines+=("                              }")
+            ;;
+        esac
+
+        case "${PORTAL_SESSIONS_PERSISTENT_TYPE,,}" in
+            "file" )
+                portal_lines+=("persistentStorage           = Apache::Session::File")
+                portal_lines+=("persistentStorageOptions    = { \\")
+                portal_lines+=("                                'Directory'      => '${PORTAL_SESSIONS_PERSISTENT_PATH}/', \\")
+                portal_lines+=("                                'LockDirectory'  => '${PORTAL_SESSIONS_PERSISTENT_PATH}/lock/', \\")
+                portal_lines+=("                              }")
+            ;;
+        esac
+
+        if var_true "${PORTAL_ENABLE_NOTIFICATIONS}" ; then
+            portal_lines+=("notification                = 1")
+            case "${PORTAL_NOTIFICATIONS_TYPE,,}" in
+                file )
+                    portal_lines+=("notificationStorage         = File")
+                    portal_lines+=("notificationStorageOptions  = { \\")
+                    portal_lines+=("                                'dirName'           => '${PORTAL_NOTIFICATIONS_TYPE_FILE_PATH}' ,\\")
+                    portal_lines+=("                                'fileNameSeperator' => '${PORTAL_NOTIFICATIONS_TYPE_FILE_SEPERATOR}' ,\\")
+                    portal_lines+=("                              }")
+                ;;
+            esac
+            var_true "${PORTAL_NOTIFICATIONS_ENABLE_PUBLIC}"    && portal_lines+=("publicNotification          = 1")
+            if var_true "${PORTAL_NOTIFICATIONS_ENABLE_EXPLORER}" ; then
+                portal_lines+=("notificationsExplorer       = 1")
+                portal_lines+=("notificationsMaxRetrieve    = ${PORTAL_NOTIFICATIONS_EXPLORER_MAX_RETRIEVE}")
+            fi
         fi
 
-        if [ -n "${PORTAL_LOG_LEVEL}" ] ; then
-            config_portal=$(cat<<EOF
-${config_portal}
-logLevel                = ${PORTAL_LOG_LEVEL}
-EOF
-                            )
-        fi
+        config_portal=$(printf "%s\n" "${portal_lines[@]}")
     fi
 }
 
 llng_configure_socket() {
-    print_debug "Configuring Socket"
-    if var_true "${HANDLER_SOCKET_TCP_ENABLE}" ; then
-        HANDLER_SOCKET=${HANDLER_SOCKET:-"127.0.0.1:${HANDLER_SOCKET_TCP_PORT}"}
-        sed -i "/fastcgi_param LLTYPE/ a \ \ \ \ \ \ \ fastcgi_param REMOTE_PORT $HANDLER_SOCKET_TCP_PORT;" /etc/nginx/sites.available/*.conf
-        print_notice "Enabling Handler TCP expose functionality. Socket listens at port ${HANDLER_SOCKET_TCP_PORT}"
-    else
-        HANDLER_SOCKET=${HANDLER_SOCKET:-"unix:/var/run/llng-fastcgi-server/llng-fastcgi.sock|g"}
+    local conf_file
+    local conf_path="/etc/nginx/sites.available/"
+    local site="${1,,}"
+    local socket_val
+    local socket_var="${site^^}_SOCKET"
+
+    case "${site}" in
+        api)        conf_file="04-api.conf" ;;
+        portal)     conf_file="02-portal.conf" ;;
+        manager)    conf_file="03-manager.conf" ;;
+        handler)    conf_file="01-handler.conf" ;;
+        test)       conf_file="05-test.conf" ;;
+        *)          print_error "Unknown site '${site}' for socket configuration"; return 1 ;;
+    esac
+
+    socket_val="${!socket_var}"
+
+    if [ -z "$socket_val" ]; then
+        if [ "${DEFAULT_SOCKET_TYPE,,}" = "path" ] || [ "${DEFAULT_SOCKET_TYPE,,}" = "unix" ]; then
+            socket_val="unix:${DEFAULT_SOCKET_PATH}"
+        else
+            socket_val="${DEFAULT_SOCKET_TCP_HOST}:${DEFAULT_SOCKET_TCP_PORT}"
+        fi
     fi
-    update_template "/etc/nginx/sites.available/*.conf" HANDLER_SOCKET
+
+    print_debug "[configure_socket] Setting ${site^} socket: ${socket_val}"
+    sed -i \
+                -e "s|fastcgi_pass .*;|fastcgi_pass ${socket_val};|g" \
+            "${conf_path%/}"/"${conf_file}"
+
+    if [[ "$socket_val" != unix:* && "$socket_val" == *:* ]]; then
+        sed -i \
+                    -e "/fastcgi_param LLTYPE/ a \        fastcgi_param REMOTE_PORT ${socket_val##*:};" \
+                "${conf_path%/}"/"${conf_file}"
+    fi
 }
 
 llng_configure_test() {
     if var_true "${ENABLE_TEST}" ; then
         print_debug "Configuring Test Sites"
+        transform_var file \
+                            TEST_HOSTNAME \
+                            TEST_SOCKET
+        sanity_var TEST_HOSTNAME "Portal Hostname"
+        llng_bootstrap_configuration test
+        llng_configure_socket test
         nginx_site_enable 05-test
-        sanity_var TEST_HOSTNAME "Test Hostname"
         update_template /etc/nginx/sites.available/05-test.conf \
-                                                            NGINX_LISTEN_PORT \
-                                                            NGINX_LOG_ACCESS_FORMAT \
-                                                            NGINX_LOG_ACCESS_LOCATION \
-                                                            NGINX_LOG_ERROR_LOCATION \
-                                                            TEST_HOSTNAME
+                                                                NGINX_LISTEN_PORT \
+                                                                NGINX_LOG_ACCESS_FORMAT \
+                                                                NGINX_LOG_ACCESS_LOCATION \
+                                                                NGINX_LOG_ERROR_LOCATION \
+                                                                TEST_HOSTNAME
 
         create_logrotate nginx_lemonldap-manager_test "${NGINX_LOG_ACCESS_LOCATION}"/access-test.log nginx-"${NGINX_LOG_ACCESS_FORMAT}" "${NGINX_USER}" "${NGINX_GROUP}"
         create_logrotate nginx_lemonldap-manager_test "${NGINX_LOG_ACCESS_LOCATION}"/error-test.log nginx-error-standard,nginx-error-alt-standard "${NGINX_USER}" "${NGINX_GROUP}"
@@ -405,22 +592,23 @@ llng_configure_test() {
 
 llng_configure_webserver() {
     sed -i  \
-                -e "\#application/zip#a\ \ \ \ application/x-font-ttf ttf;" \
-                -e "\#application/zip#a\ \ \ \ font/opentype ott;" \
+                -e "\#application/zip#a\ \ \ \ application/x-font-ttf           ttf;" \
+                -e "\#application/zip#a\ \ \ \ font/opentype                    ott;" \
             /etc/nginx/mime.types
 }
 
 llng_logtype() {
     case "${1,,}" in
-        "console")
-            echo "Lemonldap::NG::Common::Logger::Std"
-        ;;
-        "file" | "syslog" )
-            echo "Lemonldap::NG::Common::Logger::Syslog"
-        ;;
-        *)
-            echo "Lemonldap::NG::Common::Logger::Std"
-        ;;
+        "file" | "syslog" ) echo "Lemonldap::NG::Common::Logger::Syslog" ;;
+        "console" | * )     echo "Lemonldap::NG::Common::Logger::Std" ;;
+    esac
+}
+
+llng_translate_logLevel() {
+    case "${1,,}" in
+        "debug" | "warn" )  echo "${1^^}" ;;
+        "error" |"notice" ) echo "ERROR" ;;
+        "info" | * )        echo "INFO" ;;
     esac
 }
 
@@ -432,7 +620,7 @@ llng_override_path() {
     local g="$5"
     local p="$6"
 
-    if [ "$path_env" != "$path_default" ]; then
+    if [ "${path_env}" != "${path_default}" ]; then
         create_folder "${path_env}" "${u}:${g}" "${p}"
         if dir_empty "${path_env}"; then
             print_warn "Overriding default assets path ${path_default} to ${path_env}"
@@ -447,9 +635,16 @@ llng_override_path() {
 }
 
 llng_setup_container_mode() {
+    transform_var file MODE
     if [ "${MODE,,}" = "master" ] || [ "${MODE,,}" = "main" ] || [ "${MODE,,}" = "aio" ]; then
         print_debug "Container Mode: Master/AIO"
         print_debug "Creating MODE environment generated variables"
+        transform_var file \
+                            ENABLE_API \
+                            ENABLE_HANDLER \
+                            ENABLE_MANAGER \
+                            ENABLE_PORTAL \
+                            ENABLE_TEST
         ENABLE_API=${ENABLE_API:-"TRUE"}
         ENABLE_HANDLER=${ENABLE_HANDLER:-"TRUE"}
         ENABLE_MANAGER=${ENABLE_MANAGER:-"TRUE"}
@@ -459,25 +654,9 @@ llng_setup_container_mode() {
         modes=$(echo "${MODE,,}" | tr "," "\n")
         for mode in $modes; do
             case "${mode,,}" in
-                "api" )
-                    print_debug "Enabling Container Mode for: API"
-                    ENABLE_API=TRUE
-                ;;
-                "handler" )
-                    print_debug "Enabling Container Mode for: Handler"
-                    ENABLE_HANDLER=TRUE
-                ;;
-                "manager" )
-                    print_debug "Enabling Container Mode for: Manager"
-                    ENABLE_MANAGER=TRUE
-                ;;
-                "portal" )
-                    print_debug "Enabling Container Mode for: Portal"
-                    ENABLE_PORTAL=TRUE
-                ;;
-                "test" )
-                    print_debug "Enabling Container Mode for: Test Sites"
-                    ENABLE_TEST=TRUE
+                "api" | "handler" | "manager" | "portal" | "test")
+                    print_debug "Enabling Container Mode for: ${mode^}"
+                    ENABLE_${mode^^}=TRUE
                 ;;
                 *)
                     print_error "Unknown 'MODE' environment variable - exitting.."
@@ -488,23 +667,6 @@ llng_setup_container_mode() {
     fi
 }
 
-llng_translate_logLevel() {
-    case "${1,,}" in
-        "debug")
-            echo "DEBUG"
-        ;;
-        "error" | "notice" )
-            echo "ERROR"
-        ;;
-        "warn")
-            echo "WARN"
-        ;;
-        "info" | *)
-            echo "INFO"
-        ;;
-    esac
-}
-
 llng_write_config() {
     if [ "${SETUP_TYPE,,}" = "auto" ] ; then
         cat <<EOF | silent sudo -u llng tee "${CONFIG_INSTANCE_PATH}"/"${CONFIG_INSTANCE_FILE}"
@@ -513,22 +675,18 @@ llng_write_config() {
 ; Last Generated on $(TZ=${TIMEZONE} date +'%Y-%m-%d %H:%M:%S %Z')
 
 [all]
-${config_logging}
+${config_all}
 
 [configuration]
 ${config_configuration}
 
-${config_portal}
+$([ -n "${config_handler}" ] && echo "${config_handler}")
 
-${config_handler}
+$([ -n "${config_manager}" ] && echo "${config_manager}")
 
-${config_manager}
-
+$([ -n "${config_portal}" ] && echo "${config_portal}")
 EOF
     else
-        print_warn "Manual Mode activated, you must make all changes to /etc/lemonldap-ng/lemonldap-ng.ini manually!"
+        print_warn "Manual Mode activated, you must make all changes to '${CONFIG_INSTANCE_PATH%/}/${CONFIG_INSTANCE_FILE}' manually!"
     fi
 }
-
-
-

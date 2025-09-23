@@ -22,18 +22,14 @@ ARG \
     LEMONLDAP_VERSION="2.21.3" \
     AUTHCAS_VERSION="1.7" \
     LASSO_VERSION="v2.9.0" \
-    LIBU2F_VERSION="master" \
     LLNG_SESSION_BROWSEABLE_VERSION="v1.3.17" \
     LLNG_SESSION_LDAP_VERSION="v0.5" \
-    LLNG_SESSION_MONGODB_VERSION="v0.21" \
     LLNG_SESSION_NOSQL_VERSION="05ec4253c3055c301d1e3fb0f722169fee294622" \
     AUTHCAS_REPO_URL="https://sourcesup.renater.fr/frs/download.php/file/5125" \
     LASSO_REPO_URL="https://git.entrouvert.org/entrouvert/lasso" \
     LEMONLDAP_REPO_URL="https://gitlab.ow2.org/lemonldap-ng/lemonldap-ng" \
-    LIBU2F_REPO_URL="https://github.com/Yubico/libu2f-server" \
     LLNG_SESSION_BROWSEABLE_REPO_URL="https://github.com/LemonLDAPNG/Apache-Session-Browseable" \
     LLNG_SESSION_LDAP_REPO_URL="https://github.com/LemonLDAPNG/Apache-Session-LDAP" \
-    LLNG_SESSION_MONGODB_REPO_URL="https://github.com/LemonLDAPNG/apache-session-mongodb" \
     LLNG_SESSION_NOSQL_REPO_URL="https://github.com/LemonLDAPNG/Apache-Session-NoSQL"
 
 COPY CHANGELOG.md /usr/src/container/CHANGELOG.md
@@ -53,7 +49,6 @@ ENV \
     NGINX_LOG_ERROR_LOCATION=/logs/nginx/ \
     NGINX_SITE_ENABLED=null \
     NGINX_WORKER_PROCESSES=1 \
-    #NGINX_WEBROOT=/www/llng \
     PATH=/usr/share/lemonldap-ng/bin:${PATH} \
     IMAGE_NAME="nfrastack/lemonldap" \
     IMAGE_REPO_URL="https://github.com/nfrastack/container-lemonldap/"
@@ -246,20 +241,6 @@ RUN echo "" && \
     make install && \
     container_build_log add "LaSSO" "${LASSO_VERSION}" "${LASSO_REPO_URL}" && \
     \
-    clone_git_repo "${LIBU2F_REPO_URL}" ${LIBU2F_VERSION} && \
-    ./autogen.sh && \
-    ./configure \
-                --build=$CBUILD \
-                --host=$CHOST \
-                --prefix=/usr \
-                --sysconfdir=/etc \
-                --mandir=/usr/src/man \
-                --localstatedir=/var \
-                --enable-tests && \
-    make -j$(nproc) && \
-    make install && \
-    container_build_log add "LIBU2F" "${LIBU2F_VERSION}" "${LIBU2F_REPO_URL}" && \
-    \
     clone_git_repo "${LLNG_SESSION_NOSQL_REPO_URL}" "${LLNG_SESSION_NOSQL_VERSION}" && \
     perl Makefile.PL && \
     make -j$(nproc) && \
@@ -314,7 +295,6 @@ RUN echo "" && \
             PROD=yes \
             install \
             && \
-    ##TODO Copy license to build_log?
     \
     mkdir -p /container/data/llng/conf && \
     mv /var/lib/lemonldap-ng/conf/* /container/data/llng/conf/ && \
@@ -322,16 +302,23 @@ RUN echo "" && \
             -e "s|example.com|nfrastack.com|g" \
             /container/data/llng/conf/*.json && \
     mv /etc/lemonldap-ng/lemonldap-ng.ini /container/data/llng/conf/ && \
-    mkdir -p /container/data/llng/assets && \
+    mkdir -p /container/data/llng/assets/portal && \
     cp -aR \
-                /usr/share/lemonldap-ng/portal/static/common/apps \
-                /usr/share/lemonldap-ng/portal/static/common/icons \
-                /usr/share/lemonldap-ng/portal/static/common/logos \
-                /usr/share/lemonldap-ng/portal/static/languages \
-            /container/data/llng/assets/ && \
+                /usr/share/lemonldap-ng/portal/static \
+                /usr/share/lemonldap-ng/portal/templates \
+            /container/data/llng/assets/portal && \
     \
-    for asset in apps icons logos languages; do \
-        echo "${LEMONLDAP_VERSION} $(TZ=${TIMEZONE} date +'%Y-%m-%dT%H:%M:%S %Z') " > /container/data/llng/assets/${asset}/.source; \
+    rm -rf /container/data/llng/assets/portal/static/bwr && \
+    \
+    for asset in \
+                    static/bootstrap \
+                    static/common/apps \
+                    static/common/icons \
+                    static/languages \
+                    static/common/logos \
+                    templates/bootstrap \
+                    templates/common; do \
+        echo "${LEMONLDAP_VERSION} $(TZ=${TIMEZONE} date +'%Y-%m-%dT%H:%M:%S %Z') " > /container/data/llng/assets/portal/${asset}/.source; \
     done && \
     \
     mkdir -p /container/data/llng/htdocs && \
@@ -350,7 +337,6 @@ RUN echo "" && \
     rm -rf \
             /etc/lemonldap-ng \
             /root/.cpanm \
-            /usr/local/bin/minify \
             /usr/share/lemonldap-ng/etc \
             /usr/share/lemonldap-ng/examples \
             /var/lib/lemonldap-ng \

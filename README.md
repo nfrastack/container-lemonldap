@@ -2,7 +2,7 @@
 
 ## About
 
-This repository will build a container with [LemonLDAP::NG](https://lemonldap-ng.org/), an authorization anc access manager supporting multiple protocols and standards. (SAML, OpenID Connect, CAS) served by Nginx.
+This repository will build a container for [LemonLDAP::NG](https://lemonldap-ng.org/), an authorization anc access manager supporting multiple protocols and standards. (SAML, OpenID Connect, CAS) served by Nginx.
 
 * Sane defaults to have a working solution by just running the image
 * Automatically generates configuration files on startup, or option to use your own
@@ -12,8 +12,6 @@ This repository will build a container with [LemonLDAP::NG](https://lemonldap-ng
 * Ready to work out the box for SAML, OpenID, 2FA/2OTP
 * Additional modules compiled for Redis, Mysql, Postgres, LDAP Session/Config Storage
 * Choice of Logging (Console, File, Syslog)
-
-*This is an incredibly complex piece of software and this image tries to get you up and running with sane defaults, you will need to switch eventually over to manually configuring the configuration file when depending on your usage case*
 
 ## Maintainer
 
@@ -31,12 +29,21 @@ This repository will build a container with [LemonLDAP::NG](https://lemonldap-ng
 * [Configuration](#configuration)
   * [Environment Variables](#environment-variables)
     * [Base Images used](#base-images-used)
-    * [Core Configuration](#core-configuration)
+    * [Core Variables](#core-variables)
+    * [Configuration Variables](#configuration-variables)
+    * [Socket & Networking Variables](#socket--networking-variables)
+    * [Logging Variables](#logging-variables)
+    * [Handler Variables](#handler-variables)
+    * [Manager Variables](#manager-variables)
+    * [Manager API Variables](#manager-api-variables)
+    * [Portal Variables](#portal-variables)
+    * [Test Site Variables](#test-site-variables)
   * [Users and Groups](#users-and-groups)
   * [Networking](#networking)
 * [Maintenance](#maintenance)
   * [Shell Access](#shell-access)
 * [Support & Maintenance](#support--maintenance)
+* [References](#references)
 * [License](#license)
 
 ## Prerequisites and Assumptions
@@ -57,7 +64,7 @@ To unlock advanced features, one must provide a code to be able to change specif
 
 To get access to the image use your container orchestrator to pull from the following locations:
 
-```
+```bash
 ghcr.io/nfrastack/container-lemonldap:(image_tag)
 docker.io/nfrastack/lemonldap:(image_tag)
 ```
@@ -93,14 +100,11 @@ Images are built for `amd64` by default, with optional support for `arm64` and o
 
 The following directories are used for configuration and can be mapped for persistent storage.
 
-| Directory                         | Description                                                                          |
-| --------------------------------- | ------------------------------------------------------------------------------------ |
-| `/etc/lemonldap-ng/`              | (Optional) - LemonLDAP core configuration files. Auto Generates on Container startup |
-| `/var/lib/lemonldap-ng/conf`      | Actual Configuration of LemonLDAP (lmConf-X.js files)                                |
-| `/var/lib/lemonldap-ng/sessions`  | (Optional) - Storage of Sessions of users                                            |
-| `/var/lib/lemonldap-ng/psessions` | (Optional) - Storage of Sessions of users                                            |
-| `/assets/custom`                  | Ability to overwrite themes/inject into image upon bootup for theming /etc.          |
-| `/www/logs`                       | Log files for individual services                                                    |
+| Directory  | Description                                                                              |
+| ---------- | ---------------------------------------------------------------------------------------- |
+| `/cache/`  | (Optional) - Optional Cache folder                                                       |
+| `/config/` | (Optional) - LemonLDAP instance configuration files. Auto Generates on Container startup |
+| `/data/`   | Global configuration, Portal sessions, Portal Notifications, other volatile storage      |
 
 ## Configuration
 
@@ -122,107 +126,207 @@ Below is the complete list of available options that can be used to customize yo
 
 There are a huge amount of configuration variables and it is recommended that you get comfortable for a few hours with the [LemonLDAP::NG Documentation](https://lemonldap-ng.org/documentation/2.0/start)
 
-You will eventually based on your usage case switch over to `SETUP_TYPE=MANUAL` and edit your own `lemonldap-ng.ini`. While I've tried to make this as easy to use as possible, once in production you'll find much better success with large implementations with this approach.
+You will eventually based on your usage case switch over to `SETUP_TYPE=MANUAL` and edit your own `lemonldap-ng.ini`/`instance.cfg`. While I've tried to make this as easy to use as possible, once in production you'll find much better success with large implementations with this approach.
 
 By Default this image is ready to run out of the box, without having to alter any of the settings with the exception of the `_HOSTNAME` vars. You can also change the majority of these settings from within the Manager. There are instances where these variables would want to be set if you are running multiple handlers or need to enforce a Global Setting for one specific installation.
 
-| Parameter          | Description                                                                                    | Default               |
-| ------------------ | ---------------------------------------------------------------------------------------------- | --------------------- |
-| `SETUP_TYPE`       | `AUTO` to auto generate lemonldap-ng.ini on bootup, otherwise let admin control configuration. | `AUTO`                |
-| `MODE`             | Type of Install - `HANDLER` for handler duties only, `MASTER` for Portal, Manager, Handler     | `MASTER`              |
-|                    | Or any combo of `API`, `HANDLER`, `MANAGER`, `PORTAL`, `TEST`                                  |                       |
-| `CONFIG_TYPE`      | Configuration type (`FILE`, `REST`) -                                                          | `FILE`                |
-| `DOMAIN_NAME`      | Your domain name e.g. `example.org`                                                            |                       |
-| `API_HOSTNAME`     | FQDN for Manager API e.g. `api.manager.sso.example.org`                                        |                       |
-| `MANAGER_HOSTNAME` | FQDN for Manager e.g. `manager.sso.example.org`                                                |                       |
-| `PORTAL_HOSTNAME`  | FQDN for public portal/main URL e.g. `sso.example.org`                                         |                       |
-| `HANDLER_HOSTNAME` | FQDN for Configuration reload URL e.g. `handler.sso.example.org`                               |                       |
-| `TEST_HOSTNAME`    | FQDN for test URL to prove that LemonLDAP works e.g. `test.sso.example.org`                    |                       |
-| `LOG_FILE`         | LL:NG main log file                                                                            | `lemonldap.log`       |
-| `LOG_FILE_USER`    | LL:NG User log file                                                                            | `lemonldap-user.log`  |
-| `LOG_PATH`         | Log Path                                                                                       | `/www/logs/lemonldap` |
-| `LOG_TYPE`         | How to Log - Options `CONSOLE` or `FILE`                                                       | `CONSOLE`             |
-| `LOG_LEVEL`        | LogLevel - Options `warn, notice, info, error, debug`                                          | `info`                |
-| `USER_LOG_TYPE`    | How to Log User actions - Options `CONSOLE, FILE, SYSLOG`                                      | `CONSOLE`             |
+#### Core Variables
 
-#### REST Settings
+| Parameter     | Description                                                                              | Default  | `_FILE` |
+| ------------- | ---------------------------------------------------------------------------------------- | -------- | ------- |
+| `SETUP_TYPE`  | `AUTO` to auto generate lemonldap-ng.ini on bootup, manually control configuration files | `AUTO`   |         |
+| `MODE`        | Install mode comma seperated  `AIO` = all                                                | `AIO`    | x       |
+|               | Options: `API` `HANDLER` `HANDLER` `MANAGER` `TEST`                                      |          |         |
+| `DATA_PATH`   | Data path                                                                                | `/data/` |         |
+| `DOMAIN_NAME` | Your domain name eg `example.com`                                                        |          | x       |
 
-Depending if `REST` was chosen for `CONFIG_TYPE`, these variables would be used.
+#### Configuration Variables
 
-| Parameter   | Description                                                                      | Default | `_FILE` |
-| ----------- | -------------------------------------------------------------------------------- | ------- | ------- |
-| `REST_HOST` | Hostname of Master REST Server e.g. `https://sso.example.com/index.psgi/config/` |         | x       |
-| `REST_USER` | Username to fetch Configuration Information                                      |         | x       |
-| `REST_PASS` | Password to fetch Configuration Information                                      |         | x       |
+| Parameter                                    | Description                                                                    | Default             | `_FILE` |
+| -------------------------------------------- | ------------------------------------------------------------------------------ | ------------------- | ------- |
+| `CONFIG_CHECK_INTERVAL`                      | Interval for config checks in seconds                                          | `1`                 |         |
+| `CONFIG_INSTANCE_PATH`                       | Instance config path                                                           | `/config/`          |         |
+| `CONFIG_INSTANCE_FILE`                       | Instance config file                                                           | `instance.cfg`      |         |
+| `CONFIG_GLOBAL_TYPE`                         | Global config type `FILE` or `REST`                                            | `FILE`              |         |
+| `CONFIG_GLOBAL_CONFIG_TIMEOUT`               | Global config timeout in seconds                                               | `10`                |         |
+| `CONFIG_GLOBAL_FILE_PATH`                    | Global file path                                                               | `${DATA_PATH}/conf` |         |
+| `CONFIG_GLOBAL_FILE_PRETTY_PRINT`            | Pretty print config file                                                       | `TRUE`              |         |
+| `CONFIG_GLOBAL_REST_HOST`                    | Hostname of Portal REST Server eg `https://sso.example.com/index.psgi/config/` |                     | x       |
+| `CONFIG_GLOBAL_REST_USER`                    | Username to fetch Configuration Information                                    |                     | x       |
+| `CONFIG_GLOBAL_REST_PASS`                    | Password to fetch Configuration Information                                    |                     | x       |
+| `CONFIG_GLOBAL_CACHE_TYPE`                   | Global cache type `FILE` `NONE`                                                | `FILE`              |         |
+| `CONFIG_GLOBAL_CACHE_FILE_PATH`              | Global cache file path                                                         | `/cache/`           |         |
+| `CONFIG_GLOBAL_CACHE_FILE_NAMESPACE`         | Global cache file namespace                                                    | `config`            |         |
+| `CONFIG_GLOBAL_CACHE_FILE_DEPTH`             | Global cache file depth                                                        | `0`                 |         |
+| `CONFIG_GLOBAL_CACHE_FILE_DIR_MASK`          | Global cache file dir mask                                                     | `007`               |         |
+| `CONFIG_GLOBAL_CACHE_FILE_EXPIRY`            | Global cache file expiry                                                       | `600`               |         |
+| `CONFIG_GLOBAL_SCHEDULE_PURGE_CENTRAL_CACHE` | Cron expression to purge central cache (or `FALSE` to disable)                 | `*/10 * * * *`      |         |
+| `CONFIG_GLOBAL_SCHEDULE_ROTATE_OIDC_KEYS`    | Cron expresstion to rotate OIDC keys (or `FALSE` to disable)                   | `5 5 * * 6`         |         |
+| `CONFIG_GLOBAL_SCHEDULE_PURGE_LOCAL_CACHE`   | Cron expression to purge local cache (or `FALSE` to disable)                   | `1 * * * *`         |         |
+| `CONFIG_ENABLE_CROSS_DOMAIN`                 | (instance) Enable Cross Domain Access (CDA) `TRUE`/`FALSE`                     |                     |         |
+| `CONFIG_USE_SAFE_JAIL`                       | (instance) Use safe jail                                                       | `TRUE`              |         |
 
-#### Portal Settings
+#### Socket & Networking Variables
 
-| Parameter                    | Description                                                                                         | Default                                    | `_FILE` |
-| ---------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------ | ------- |
-| `PORTAL_CACHE_TYPE`          | Only Cache Type available for now -                                                                 | `FILE`                                     |         |
-| `PORTAL_TEMPLATE_DIR`        |                                                                                                     | `/usr/share/lemonldap-ng/portal/templates` |         |
-| `PORTAL_LOG_TYPE`            | Override Portal Log - Options `CONSOLE` or `FILE`                                                   | `CONSOLE`                                  |         |
-| `PORTAL_LOG_LEVEL`           | Override Portal LogLevel - Options `warn, notice, info, error, debug`                               | `info`                                     |         |
-| `PORTAL_USER_LOG_TYPE`       | Override Portal Log User actions - Options `CONSOLE` or `FILE`                                      | `CONSOLE`                                  |         |
-| `PORTAL_ENABLE_GITLAB_OAUTH` | Redirect requests from Gitlab to support OAuth for Mattermost Authentication                        | `FALSE`                                    |         |
-| `PORTAL_ENABLE_REST`         | Allow REST access to the Portal -                                                                   | `FALSE`                                    |         |
-| `PORTAL_REST_ALLOWED_IPS`    | If above options enabled, provide comma seperated list of IP/Network to allow access                | `0.0.0.0/0`                                |         |
-| `PORTAL_REST_AUTH_FILE`      | Populate this file manually or with environment variables for REST authentication (htpasswd format) | `/etc/lemonldap-ng/portal-rest.htpasswd`   |         |
-| `PORTAL_REST_USER01`         | Username for REST Authentication                                                                    |                                            | x       |
-| `PORTAL_REST_PASS01`         | Password for REST Authentication                                                                    |                                            | x       |
-| `PORTAL_REST_USER02`         | Username for REST Authentication                                                                    |                                            | x       |
-| `PORTAL_REST_PASS02`         | Password for REST Authentication                                                                    |                                            | x       |
-| `PORTAL_REST_USER...`        | Username for REST Authentication                                                                    |                                            | x       |
-| `PORTAL_REST_PASS...`        | Password for REST Authentication                                                                    |                                            | x       |
-| `PORTAL_ENABLE_STATUS`       | Configure nginx to serve status page                                                                | `FALSE`                                    |         |
-| `PORTAL_STATUS_ALLOWED_IPS`  | If above options enabled, provide comma seperated list of IP/Network to allow access                | `0.0.0.0/0`                                |         |
-| `ENABLE_IMPERSONATION`       | If you wish to allow impersonation using a seperate theme set to `TRUE`                             | `FALSE`                                    |         |
-| `IMPERSONATE_HOSTNAME`       | Hostname to use to load the custom impersonation theme                                              |                                            |         |
-| `IMPERSONATE_THEME`          | Theme to use to load the impersonation theme                                                        |                                            |         |
+| Parameter                 | Description                                          | Default                                          |
+| ------------------------- | ---------------------------------------------------- | ------------------------------------------------ |
+| `DEFAULT_SOCKET_TYPE`     | Default socket type (`tcp`, `path`/`unix` or `both`) | `tcp`                                            |
+| `DEFAULT_SOCKET_PATH`     | Default UNIX socket path                             | `/var/run/llng-fastcgi-server/llng-fastcgi.sock` |
+| `DEFAULT_SOCKET_TCP_HOST` | Default TCP socket host                              | `127.0.0.1`                                      |
+| `DEFAULT_SOCKET_TCP_PORT` | Default TCP socket port                              | `2884`                                           |
 
-* With impersonation, if you enable it, it will add a new field to your login screen, which may not be what you want if this is a production system. You will need to create two custom themes (one as a replica of bootstrap, and one for impersonation). In the custom theme, make modifications to `login.tpl` to stop it from loading impersonation.tpl, yet in your impersonation theme, leave it in there. Then, when one of your admin/support team visits the custom `IMPERSONATE_HOSTNAME` you have defined it will load the full theme with allows to impersonate, where as the default theme will not show this.
+>> If `API`, `HANDLER`, `MANAGER`, `PORTAL`, `TEST` `_SOCKET` not set these values will be used.
+>> If you wish to override use the appropriate variables with the values of either
+>> `unix://path.sock` or `ip:port`
 
-#### Handler Settings
+#### Logging Variables
 
-| Parameter                           | Description                                                                                                                                            | Default                 |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------- |
-| `CACHE_TYPE`                        | Session Cache type (`FILE` only available for now) -                                                                                                   | `FILE`                  |
-| `CACHE_TYPE_FILE_NAMESPACE`         |                                                                                                                                                        | `lemonldap-ng-config`   |
-| `CACHE_TYPE_FILE_EXPIRY`            |                                                                                                                                                        | `600`                   |
-| `CACHE_TYPE_FILE_DIR_MASK`          |                                                                                                                                                        | `007`                   |
-| `CACHE_TYPE_FILE_PATH`              |                                                                                                                                                        | `/tmp`                  |
-| `CACHE_TYPE_FILE_DEPTH`             |                                                                                                                                                        | `0`                     |
-| `HANDLER_ALLOWED_IPS`               | If you need to access access to `/reload` other than localhost add a comma seperated list or hosts or networks here e.g. `172.16.0.0/12,192.168.0.253` |
-| `HANDLER_CACHE_TYPE`                |                                                                                                                                                        | `FILE`                  |
-| `HANDLER_CACHE_TYPE_FILE_NAMESPACE` |                                                                                                                                                        | `lemonldap-ng-sessions` |
-| `HANDLER_CACHE_TYPE_FILE_EXPIRY`    |                                                                                                                                                        | `600`                   |
-| `HANDLER_CACHE_TYPE_FILE_DIR_MASK`  |                                                                                                                                                        | `007`                   |
-| `HANDLER_CACHE_TYPE_FILE_PATH`      |                                                                                                                                                        | `/tmp`                  |
-| `HANDLER_CACHE_TYPE_FILE_DEPTH`     |                                                                                                                                                        | `3`                     |
-| `HANDLER_SOCKET_TCP_ENABLE`         | Enable TCP Connections to socket instead of /var/run/llng-fastcgi-server/llng-fastcgi.sock -                                                           | `TRUE`                  |
-| `HANDLER_SOCKET_TCP_PORT`           | Port to listen on for Handler                                                                                                                          | `2884`                  |
-| `HANDLER_STATUS`                    | Allow Status on Handler                                                                                                                                | `TRUE`                  |
-| `HANDLER_REDIRECT_ON_ERROR`         |                                                                                                                                                        | `TRUE`                  |
-| `HANDLER_LOG_TYPE`                  | Override Handler Log - Options `CONSOLE, FILE, SYSLOG`                                                                                                 | `CONSOLE`               |
-| `HANDLER_LOG_LEVEL`                 | Override Handler LogLevel - Options `warn, notice, info, error, debug`                                                                                 | `info`                  |
-| `HANDLER_PROCESSES`                 | Amount of LLNG Handler processes to spawn `auto` for the amount of CPU, otherwise an integer cores                                                                                                              | `1`                     |
-| `HANDLER_USER_LOG_TYPE`             | Override Handler Log User actions - Options `CONSOLE` or `FILE`                                                                                        | `CONSOLE`               |
+| Parameter       | Description                                                   | Default              |
+| --------------- | ------------------------------------------------------------- | -------------------- |
+| `LOG_PATH`      | Logfile path                                                  | `/logs/lemonldap/`   |
+| `LOG_LEVEL`     | Global log level (`warn`, `notice`, `info`, `error`, `debug`) | `notice`             |
+| `LOG_TYPE`      | Global log type (`CONSOLE`, `FILE`, `SYSLOG`)                 | `CONSOLE`            |
+| `LOG_FILE`      | Main log file name                                            | `lemonldap.log`      |
+| `LOG_USER_TYPE` | User log type (`CONSOLE`, `FILE`, `SYSLOG`)                   | `CONSOLE`            |
+| `LOG_USER_FILE` | User log file name                                            | `lemonldap-user.log` |
 
-#### Manager Options
+#### Handler Variables
 
-| Parameter                 | Description                                                                                                                                      | Default                                     |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------- |
-| `MANAGER_PROTECTION`      |                                                                                                                                                  | `manager`                                   |
-| `MANAGER_LOG_LEVEL`       |                                                                                                                                                  | `warn`                                      |
-| `MANAGER_STATIC_PREFIX`   |                                                                                                                                                  | `/static`                                   |
-| `MANAGER_TEMPLATE_DIR`    |                                                                                                                                                  | `/usr/share/lemonldap-ng/manager/templates` |
-| `MANAGER_LANGUAGE`        |                                                                                                                                                  | `en`                                        |
-| `MANAGER_ENABLE_API`      | Enable Manager API -                                                                                                                             | `FALSE`                                     |
-| `MANAGER_ALLOWED_IPS`     | If you need to access access to API other than localhost add a comma seperated list or hosts or networks here e.g. `172.16.0.0/12,192.168.0.253` |
-| `MANAGER_ENABLED_MODULES` |                                                                                                                                                  | `"conf, sessions, notifications, 2ndFA"`    |
-| `MANAGER_LOG_TYPE`        | Override Manager Log - Options `CONSOLE` or `FILE`                                                                                               | `CONSOLE`                                   |
-| `MANAGER_LOG_LEVEL`       | Override Manager LogLevel - Options `warn, notice, info, error, debug`                                                                           | `info`                                      |
-| `MANAGER_USER_LOG_TYPE`   | Override Manager Log User actions - Options `CONSOLE` or `FILE`                                                                                  | `CONSOLE`                                   |
+For usage with `MODE=HANDLER`
+
+| Parameter                        | Description                                                                                  | Default                      | `_FILE` |
+| -------------------------------- | -------------------------------------------------------------------------------------------- | ---------------------------- | ------- |
+| `HANDLER_LISTEN_SOCKET_TYPE`     | Handler socket type (`tcp`, `path`/`unix` or `both`)                                         | `tcp`                        |         |
+| `HANDLER_LISTEN_SOCKET_PATH`     | Handler Listen UNIX socket path                                                              | `${DEFAULT_SOCKET_PATH}`     | x       |
+| `HANDLER_LISTEN_SOCKET_TCP_PORT` | Handler Listen TCP port port                                                                 | `${DEFAULT_SOCKET_TCP_PORT}` | x       |
+| `HANDLER_PROCESSES`              | Amount of LLNG Handler processes to spawn `auto` for the amount of CPU, otherwise an integer | `1`                          |         |
+| `HANDLER_ENABLE_NGINX`           | Enable Nginx Proxying support                                                                | `TRUE`                       |         |
+| `HANDLER_LOG_TYPE`               | Override Log type (`CONSOLE`, `FILE`, `SYSLOG`)                                              |                              |         |
+| `HANDLER_LOG_LEVEL`              | Override Log level (`warn`, `notice`, `info`, `error`, `debug`)                              |                              |         |
+| `HANDLER_ALLOWED_IPS`            | Comma seperated list or IP or networks - localhost is already allowed                        |                              | x       |
+| `HANDLER_REDIRECT_ON_ERROR`      | Handler redirect on error                                                                    | `TRUE`                       |         |
+| `HANDLER_STATUS`                 | Handler status reporting                                                                     | `TRUE`                       |         |
+| `HANDLER_CACHE_TYPE`             | Handler cache type `FILE` `NONE`                                                             | `NONE`                       |         |
+| `HANDLER_CACHE_FILE_PATH`        | Handler cache file path                                                                      | `/cache/`                    |         |
+| `HANDLER_CACHE_FILE_NAMESPACE`   | Handler cache file namespace                                                                 | `sessions`                   |         |
+| `HANDLER_CACHE_FILE_DEPTH`       | Handler cache file depth                                                                     | `3`                          |         |
+| `HANDLER_CACHE_FILE_DIR_MASK`    | Handler cache file dir mask                                                                  | `007`                        |         |
+| `HANDLER_CACHE_FILE_EXPIRY`      | Handler cache file expiry                                                                    | `600`                        |         |
+
+#### Manager Variables
+
+For usage with `MODE=MANAGER`
+
+| Parameter                     | Description                                                     | Default                                            | `_FILE` |
+| ----------------------------- | --------------------------------------------------------------- | -------------------------------------------------- | ------- |
+| `MANAGER_HOSTNAME`            | Manager Hostname eg manager.sso.example.com                     |                                                    | x       |
+| `MANAGER_PROTECTION`          | Manager protection Options:                                     | `manager`                                          | x       |
+|                               | `authenticate` `manager` `<rule>` `none`                        |                                                    |         |
+| `MANAGER_SOCKET`              | Manager socket override                                         |                                                    | x       |
+| `MANAGER_ENABLED_MODULES`     | Enabled modules comma seperated: Options: `conf`                | `conf, sessions, notifications, 2ndFA, viewer`     | x       |
+|                               | `sessions` `notifications` `2ndFA` `viewer`                     |                                                    |         |
+| `MANAGER_LANGUAGE`            | Manager language comma seperated - Options:  `en` `fr` `it`     | `en`                                               |         |
+|                               | `vi` `ar` `tr` `pl` `zh_TW` `es` `he` `pt_BR` `ru`              |                                                    |         |
+| `MANAGER_LOG_TYPE`            | Override Log type (`CONSOLE`, `FILE`, `SYSLOG`)                 |                                                    |         |
+| `MANAGER_LOG_LEVEL`           | Override Log level (`warn`, `notice`, `info`, `error`, `debug`) |                                                    |         |
+| `MANAGER_VIEWER_ALLOW_BROWSE` | Allow rule for browsing in viewer module                        | `0`                                                | x       |
+| `MANAGER_VIEWER_ALLOW_DIFF`   | Allow rule for diff review  in viewer module                    | `0`                                                | x       |
+| `MANAGER_VIEWER_HIDDEN_KEYS`  | Hidden keys in viewer module                                    | `samlIDPMetaDataNodes samlSPMetaDataNodes`         | x       |
+|                               |                                                                 | `managerPassword ManagerDn`                        |         |
+|                               |                                                                 | `globalStorageOptions persistentStorageOptions`    |         |
+| `MANAGER_INSTANCE_NAME`       | Instance Name eg 'llng' to display in manager                   |                                                    | x       |
+| `MANAGER_CUSTOM_PORTAL_URL`   | Custom Portal URL in Manager header                             |                                                    | x       |
+| `MANAGER_STATIC_PREFIX`       | Manager static prefix                                           | `/static`                                          |         |
+| `MANAGER_CSS_PATH`            | Manager CSS path                                                | `/usr/share/lemonldap-ng/manager/static/css`       |         |
+| `MANAGER_CUSTOM_CSS_FILE`     | Custom Manager CSS path+file to use                             |                                                    | x       |
+| `MANAGER_LANGUAGE_PATH`       | Manager Language path                                           | `/usr/share/lemonldap-ng/manager/static/languages` |         |
+| `MANAGER_LOGOS_PATH`          | Manager Logos path                                              | `/usr/share/lemonldap-ng/manager/static/logos`     |         |
+| `MANAGER_TEMPLATE_PATH`       | Manager Template path                                           | `/usr/share/lemonldap-ng/manager/templates`        |         |
+
+#### Manager API Variables
+
+For usage with `MODE=API`
+
+| Parameter         | Description                                    | Default | `_FILE` |
+| ----------------- | ---------------------------------------------- | ------- | ------- |
+| `API_HOSTNAME`    | API Hostname eg manager.api.sso.example.com    |         | x       |
+| `API_SOCKET`      | API socket override                            |         | x       |
+| `API_ALLOWED_IPS` | Comma seperated list of IPs, networks or hosts |         | x       |
+|                   | eg `172.16.0.0/12,192.168.0.253`               |         |         |
+
+#### Portal Variables
+
+For usage with `MODE=PORTAL`
+
+| Parameter                                    | Description                                                           | Default                                                  | `_FILE` |
+| -------------------------------------------- | --------------------------------------------------------------------- | -------------------------------------------------------- | ------- |
+| `PORTAL_HOSTNAME`                            | Portal Hostname eg sso.example.com                                    |                                                          | x       |
+| `CONTAINER_ENABLE_FIREWALL`                  | Enable Firewall Features for Fail2Ban                                 | `FALSE`                                                  |         |
+| `CONTAINER_ENABLE_FAIL2BAN`                  | Enable Fail2Ban for Portal                                            | `FALSE`                                                  |         |
+| `PORTAL_SOCKET`                              | Portal socket override                                                |                                                          | x       |
+| `PORTAL_LOG_TYPE`                            | Override Log type (`CONSOLE`, `FILE`, `SYSLOG`)                       |                                                          |         |
+| `PORTAL_LOG_LEVEL`                           | Override Log level (`warn`, `notice`, `info`, `error`, `debug`)       |                                                          |         |
+| `PORTAL_LANGUAGE`                            | Portal language Options: `en` `fr` `it` `vi`                          | `en`                                                     |         |
+|                                              | `ar` `tr` `pl` `zh_TW` `es` `he` `pt_BR` `ru`                         |                                                          |         |
+| `PORTAL_CAPTCHA_PATH`                        | Portal captcha path                                                   | `${DATA_PATH}/captcha`                                   |         |
+| `PORTAL_ICONS_PATH`                          | Portal icons path                                                     | `/usr/share/lemonldap-ng/portal/static/common/icons`     |         |
+| `PORTAL_APPS_PATH`                           | Portal App Icons path                                                 | `/usr/share/lemonldap-ng/portal/static/common/apps`      |         |
+| `PORTAL_LOGOS_PATH`                          | Portal Logos path                                                     | `/usr/share/lemonldap-ng/portal/static/common/logos`     |         |
+| `PORTAL_LANGUAGE_PATH`                       | Portal Language path                                                  | `/usr/share/lemonldap-ng/portal/static/languages`        |         |
+| `PORTAL_TEMPLATES_PATH`                      | Portal Templates path                                                 | `/usr/share/lemonldap-ng/portal/templates`               |         |
+| `PORTAL_STATIC_PATH`                         | Portal static path                                                    | `/usr/share/lemonldap-ng/portal/static`                  |         |
+| `PORTAL_STATIC_PREFIX`                       | Portal static prefix                                                  | `/static`                                                |         |
+| `PORTAL_TEMPLATE_BOOTSTRAP_PATH`             | Portal Bootstrap template path                                        | `/usr/share/lemonldap-ng/portal/templates/bootstrap`     |         |
+| `PORTAL_TEMPLATE_BOOTSTRAP_STATIC_PATH`      | Portal Bootstrap static path                                          | `/usr/share/lemonldap-ng/portal/static/bootstrap`        |         |
+| `PORTAL_TEMPLATE_COMMON_PATH`                | Portal Common template path                                           | `/usr/share/lemonldap-ng/portal/templates/common`        |         |
+| `PORTAL_TEMPLATE_COMMON_STATIC_PATH`         | Portal Common static path                                             | `/usr/share/lemonldap-ng/portal/templates/static/common` |         |
+| `PORTAL_TEMPLATE_CUSTOM_PATH`                | Replace `_CUSTOM_` with the name of your template. This will create a |                                                          |         |
+|                                              | symbolic lowercase link of the name in your `PORTAL_TEMPLATES_PATH`   |                                                          |         |
+|                                              | that can be referenced for use withihn the manager or config          |                                                          |         |
+| `PORTAL_TEMPLATE_CUSTOM_STATIC_PATH`         | As above, the location of static folder                               |                                                          |         |
+| `PORTAL_ENABLE_GITLAB_OAUTH`                 | Enable Gitlab OAuth for portal                                        | `FALSE`                                                  |         |
+| `PORTAL_SESSIONS_ACTIVE_TYPE`                | Portal active session type `FILE`                                     | `FILE`                                                   |         |
+| `PORTAL_SESSIONS_ACTIVE_PATH`                | Portal active session path                                            | `${DATA_PATH}/sessions/active`                           |         |
+| `PORTAL_SESSIONS_PERSISTENT_TYPE`            | Portal persistent session type `FILE`                                 | `FILE`                                                   |         |
+| `PORTAL_SESSIONS_PERSISTENT_PATH`            | Portal persistent session path                                        | `${DATA_PATH}/sessions/persistent`                       |         |
+| `PORTAL_ENABLE_CAPTCHA`                      | Enable Captcha Plugin `TRUE`/`FALSE`                                  |                                                          |         |
+| `PORTAL_CAPTCHA_PATH`                        | Path for storing captchas                                             | `${DATA_PATH}/captcha`                                   |         |
+| `PORTAL_ENABLE_NOTIFICATIONS`                | Enable notifications in portal                                        | `TRUE`                                                   |         |
+| `PORTAL_NOTIFICATIONS_TYPE`                  | Portal notifications type                                             | `FILE`                                                   |         |
+| `PORTAL_NOTIFICATIONS_TYPE_FILE_PATH`        | Portal notifications file path                                        | `${DATA_PATH}/notifications`                             |         |
+| `PORTAL_NOTIFICATIONS_TYPE_FILE_SEPERATOR`   | Portal notifications file separator                                   | `_`                                                      |         |
+| `PORTAL_NOTIFICATIONS_ENABLE_EXPLORER`       | Enable notifications explorer                                         | `TRUE`                                                   |         |
+| `PORTAL_NOTIFICATIONS_ENABLE_PUBLIC`         | Enable public notifications                                           | `TRUE`                                                   |         |
+| `PORTAL_NOTIFICATIONS_EXPLORER_MAX_RETRIEVE` | Max notifications to retrieve                                         | `3`                                                      |         |
+| `PORTAL_ENABLE_REST`                         | Enable REST webserver config                                          | `FALSE`                                                  |         |
+| `PORTAL_REST_ALLOWED_IPS`                    | Comma seperated list of IP/Network to allow access                    |                                                          |         |
+|                                              | eg `172.16.0.0/12,192.168.0.253`                                      |                                                          | x       |
+| `PORTAL_REST_AUTH_FILE`                      | Populate this file manually or with environment variables             |                                                          |         |
+|                                              | for REST authentication (htpasswd format)                             | `${DATA_PATH}/portal-rest.htpasswd`                      | x       |
+| `PORTAL_REST_USER01`                         | Username for REST Authentication                                      |                                                          | x       |
+| `PORTAL_REST_PASS01`                         | Password for REST Authentication                                      |                                                          | x       |
+| `PORTAL_REST_USER02`                         | Username for REST Authentication                                      |                                                          | x       |
+| `PORTAL_REST_PASS02`                         | Password for REST Authentication                                      |                                                          | x       |
+| `PORTAL_REST_USER...`                        | Username for REST Authentication                                      |                                                          | x       |
+| `PORTAL_REST_PASS...`                        | Password for REST Authentication                                      |                                                          | x       |
+| `PORTAL_ENABLE_IMPERSONATION`                | Allow impersonation using a seperate theme `TRUE`                     | `FALSE`                                                  |         |
+| `PORTAL_IMPERSONATE_HOSTNAME`                | Hostname to use to load the custom impersonation theme                |                                                          | x       |
+| `PORTAL_IMPERSONATE_THEME`                   | Theme to use to load the impersonation theme                          |                                                          | x       |
+
+>> With impersonation, if you enable it, it will add a new field to your login screen, which may not be what you want if this is a production system. You will need to create two custom themes (one as a replica of bootstrap, and one for impersonation). In the custom theme, make modifications to `login.tpl` to stop it from loading impersonation.tpl, yet in your impersonation theme, leave it in there. Then, when one of your admin/support team visits the custom `IMPERSONATE_HOSTNAME` you have defined it will load the full theme with allows to impersonate, where as the default theme will not show this.
+
+>> When changing the path of `PORTAL_` `APPS` `ICONS` `LOGOS` `LANGUAGES` path if the destination path is empty it will make a copy of the original vendor supplied content in your folder. There is an additional file `.source` which will detail the version of LemonLDAP:NG and the date that the content was copied. It is important that you watch the vendor supplied folders in later images to ensure that you are being kept up to date with the appropriate assets.
+
+>> If wishing to use Fail2Ban to lock out problematic hosts - you must enable `CONTAINER_ENABLE_FIREWALL=TRUE` AND `CONTAINER_ENABLE_FAIL2BAN=TRUE`
+
+#### Test Site Variables
+
+For usage with `MODE=TEST`
+
+| Parameter       | Description                           | Default | `_FILE` |
+| --------------- | ------------------------------------- | ------- | ------- |
+| `TEST_SOCKET`   | Test socket override                  |         | x       |
+| `TEST_HOSTNAME` | Test Hostname eg test.sso.example.com |         | x       |
 
 ## Users and Groups
 
