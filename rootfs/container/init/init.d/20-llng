@@ -8,19 +8,18 @@ prepare_service 10-nginx
 prepare_service 20-llng
 SERVICE_NAME="lemonldap-ng"
 
-llng_bootstrap_filesystem
 llng_setup_container_mode
+llng_bootstrap_filesystem
 llng_configure_instance
-llng_configure_global_configuration
-llng_bootstrap_global_configuration
-if var_true "${CONTAINER_ENABLE_FIREWALL}" && var_true "${CONTAINER_ENABLE_FAIL2BAN}" ; then llng_configure_fail2ban_llng ; fi
+llng_configure_instance_global_configuration
 llng_configure_api
 llng_configure_handler
 llng_configure_manager
 llng_configure_portal
 llng_configure_test
-llng_write_config
+llng_configure_fail2ban
 llng_configure_webserver
+llng_write_instance_config
 chown -R "${NGINX_USER}":"${NGINX_GROUP}" "${DATA_PATH}"
 create_zabbix llng
 custom_files "${CONTAINER_CUSTOM_PATH}" "/usr/share/lemonldap-ng/" "${NGINX_USER}" "${NGINX_GROUP}"

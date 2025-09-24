@@ -33,138 +33,51 @@ llng_bootstrap_filesystem(){
 }
 
 llng_bootstrap_global_configuration() {
-    local conf_dir="${CONFIG_GLOBAL_FILE_PATH}"
-    local conf_file="${conf_dir}/lmConf-1.json"
-    local target="${1,,}"
-
-    transform_var file DOMAIN_NAME
-    if dir_empty "${conf_dir}/" ; then
-        cp -aR /container/data/llng/conf/lmConf-1.json "${conf_dir}/"
-
-        print_debug "Bootstrapping Initial Configuration"
-
-        sanity_var DOMAIN_NAME "Domain Name eg example.com for writing to initial configuration file"
-        sudo -u "${NGINX_USER}" sed -i \
-                                            -e "s|nfrastack.com|${DOMAIN_NAME}|g" \
-                                        "${conf_file}"
-    fi
-
-    local file_count
-    file_count=$(find "${conf_dir}/" -type f | wc -l)
-    if [ "${file_count}" -eq 1 ] && [ -f "${conf_file}" ]; then
-        sanity_var DOMAIN_NAME "Domain Name eg example.com for writing to initial configuration file"
-        case "${target}" in
-            portal)
-                sudo -u "${NGINX_USER}" sed -i \
-                                                    -e "s|auth.${DOMAIN_NAME}|${PORTAL_HOSTNAME}|g" \
-                                                "${conf_file}"
-            ;;
-            manager)
-                sudo -u "${NGINX_USER}" sed -i \
-                                                    -e "s|manager.${DOMAIN_NAME}|${MANAGER_HOSTNAME}|g" \
-                                                "${conf_file}"
-            ;;
-            handler)
-                sudo -u "${NGINX_USER}" sed -i \
-                                                    -e "s|reload.${DOMAIN_NAME}|${HANDLER_HOSTNAME}|g" \
-                                                "${conf_file}"
-            ;;
-            test)
-                sudo -u "${NGINX_USER}" sed -i \
-                                                    -e "s|test1.${DOMAIN_NAME}|${TEST_HOSTNAME}|g" \
-                                                "${conf_file}"
-            ;;
-        esac
-    fi
-}
-
-llng_configure_global_configuration() {
     case "${CONFIG_GLOBAL_TYPE,,}" in
-        "file" )
-            create_folder \
-                            "${CONFIG_GLOBAL_FILE_PATH}" \
-                            "${NGINX_USER}":"${NGINX_GROUP}" 755
-            truefalse_onezero CONFIG_GLOBAL_FILE_PRETTY_PRINT
+        file )
+            local conf_dir="${CONFIG_GLOBAL_FILE_PATH}"
+            local conf_file="${conf_dir}/lmConf-1.json"
+            local target="${1,,}"
 
-            local config_lines=(
-                "type                = File"
-                "dirName             = ${CONFIG_GLOBAL_FILE_PATH}"
-                "prettyPrint         = ${CONFIG_GLOBAL_FILE_PRETTY_PRINT}"
-                "confTimeout         = ${CONFIG_GLOBAL_CONFIG_TIMEOUT}"
-            )
+            transform_var file DOMAIN_NAME
+            sanity_var DOMAIN_NAME "Domain Name eg example.com for writing to initial configuration file"
+            if dir_empty "${conf_dir}/" ; then
+                cp -aR /container/data/llng/conf/lmConf-1.json "${conf_dir}/"
+                print_debug "Bootstrapping Initial Configuration"
+                sudo -u "${NGINX_USER}" sed -i \
+                                                    -e "s|example.com|${DOMAIN_NAME}|g" \
+                                                "${conf_file}"
+            fi
 
-            case "${CONFIG_GLOBAL_CACHE_TYPE,,}" in
-                file )
-                    create_folder \
-                                    "${CONFIG_GLOBAL_CACHE_FILE_PATH}" \
-                                    "${NGINX_USER}":"${NGINX_GROUP}" 755
-                    config_lines+=("localStorage        = Cache::FileCache")
-                    config_lines+=("localStorageOptions = { \\")
-                    config_lines+=("                        'namespace'           => '${CONFIG_GLOBAL_CACHE_FILE_NAMESPACE}', \\")
-                    config_lines+=("                        'cache_root'          => '${CONFIG_GLOBAL_CACHE_FILE_PATH}', \\")
-                    config_lines+=("                        'directory_umask'     => '${CONFIG_GLOBAL_CACHE_FILE_DIR_MASK}', \\")
-                    config_lines+=("                        'cache_depth'         => ${CONFIG_GLOBAL_CACHE_FILE_DEPTH}, \\")
-                    config_lines+=("                        'default_expires_in'  => ${CONFIG_GLOBAL_CACHE_FILE_EXPIRY}, \\")
-                    config_lines+=("                      }")
-                ;;
-                none )
-                    :
-                ;;
-            esac
+            local file_count
+            file_count=$(find "${conf_dir}/" -type f | wc -l)
+            if [ "${file_count}" -eq 1 ] && [ -f "${conf_file}" ]; then
 
-            config_configuration=$(printf "%s\n" "${config_lines[@]}")
-        ;;
-        "rest" )
-            transform_var file \
-                                CONFIG_GLOBAL_REST_HOST \
-                                CONFIG_GLOBAL_REST_PASS \
-                                CONFIG_GLOBAL_REST_USER
-
-            local config_lines=(
-                "type       = REST"
-                "baseUrl    = ${CONFIG_GLOBAL_REST_HOST}"
-                "User       = ${CONFIG_GLOBAL_REST_USER}"
-                "Password   = ${CONFIG_GLOBAL_REST_PASS}"
-            )
-            config_configuration=$(printf "%s\n" "${config_lines[@]}")
+                case "${target}" in
+                    portal)
+                        sudo -u "${NGINX_USER}" sed -i \
+                                                            -e "s|auth.${DOMAIN_NAME}|${PORTAL_HOSTNAME}|g" \
+                                                        "${conf_file}"
+                    ;;
+                    manager)
+                        sudo -u "${NGINX_USER}" sed -i \
+                                                            -e "s|manager.${DOMAIN_NAME}|${MANAGER_HOSTNAME}|g" \
+                                                        "${conf_file}"
+                    ;;
+                    handler)
+                        sudo -u "${NGINX_USER}" sed -i \
+                                                            -e "s|reload.${DOMAIN_NAME}|${HANDLER_HOSTNAME}|g" \
+                                                        "${conf_file}"
+                    ;;
+                    test)
+                        sudo -u "${NGINX_USER}" sed -i \
+                                                            -e "s|test1.${DOMAIN_NAME}|${TEST_HOSTNAME}|g" \
+                                                        "${conf_file}"
+                    ;;
+                esac
+            fi
         ;;
     esac
-
-    if var_false "${CONFIG_GLOBAL_SCHEDULE_PURGE_LOCAL_CACHE}"; then
-        print_debug "Disabling Scheduled Central Cache Purge"
-    else
-        echo "${CONFIG_GLOBAL_SCHEDULE_PURGE_LOCAL_CACHE} ${NGINX_USER} /usr/share/lemonldap-ng/bin/purgeLocalCache  > /dev/null 2>&1" | silent tee /container/cron/lemonldap-purgelocalcache
-    fi
-
-    if var_false "${CONFIG_GLOBAL_SCHEDULE_PURGE_CENTRAL_CACHE}"; then
-        print_debug "Disabling Scheduled Central Cache Purge"
-    else
-        echo "${CONFIG_GLOBAL_SCHEDULE_PURGE_CENTRAL_CACHE} ${NGINX_USER} /usr/share/lemonldap-ng/bin/purgeCentralCache > /dev/null 2>&1" | silent tee /container/cron/lemonldap-purgecentralcache
-    fi
-
-    if var_false "${CONFIG_GLOBAL_SCHEDULE_ROTATE_OIDC_KEYS}"; then
-        print_debug "Disabling Scheduled Rotation of OIDC Keys"
-    else
-        echo  "${CONFIG_GLOBAL_SCHEDULE_ROTATE_OIDC_KEYS} ${NGINX_USER} /usr/share/lemonldap-ng/bin/rotateOidcKeys > /dev/null 2>&1" | silent tee /container/cron/lemonldap-rotateoidckeys
-    fi
-}
-
-llng_configure_fail2ban_llng() {
-    source /container/base/*/07-firewall
-    create_folder \
-                    "${NGINX_LOG_ERROR_LOCATION}" \
-                    "${NGINX_USER}":"${NGINX_GROUP}" 755
-    sudo -u "${NGINX_USER}" "${NGINX_LOG_ERROR_LOCATION}"/error-handler.log
-    cat <<EOF | silent tee "${FAIL2BAN_CONFIG_PATH}"/jail.d/llng.conf
-[llng]
-enabled  = true
-backend  = auto
-port     = http,https
-filter   = lemonldap
-action   = iptables-multiport[name=llng, port="http,https"]
-logpath  = ${NGINX_LOG_ERROR_LOCATION}/error*.log
-maxretry = 3
-EOF
 }
 
 llng_configure_api() {
@@ -175,7 +88,7 @@ llng_configure_api() {
                             API_HOSTNAME \
                             API_SOCKET
         sanity_var API_HOSTNAME "API Hostname"
-        llng_bootstrap_configuration api
+        llng_bootstrap_global_configuration api
         llng_configure_socket api
         nginx_site_enable 04-api
         update_template /etc/nginx/sites.available/04-api.conf \
@@ -197,6 +110,25 @@ llng_configure_api() {
     fi
 }
 
+llng_configure_fail2ban() {
+    if var_true "${CONTAINER_ENABLE_FIREWALL}" && var_true "${CONTAINER_ENABLE_FAIL2BAN}" && var_true "${ENABLE_HANDLER}" ; then
+        source /container/base/*/07-firewall
+        create_folder \
+                        "${NGINX_LOG_ERROR_LOCATION}" \
+                        "${NGINX_USER}":"${NGINX_GROUP}" 755
+        sudo -u "${NGINX_USER}" touch "${NGINX_LOG_ERROR_LOCATION}"/error-handler.log
+        cat <<EOF | silent tee "${FAIL2BAN_CONFIG_PATH}"/jail.d/llng.conf
+[llng]
+enabled  = true
+backend  = auto
+port     = http,https
+filter   = lemonldap
+action   = iptables-multiport[name=llng, port="http,https"]
+logpath  = ${NGINX_LOG_ERROR_LOCATION}/error*.log
+maxretry = 3
+EOF
+    fi
+}
 
 llng_configure_handler() {
     if var_true "${ENABLE_HANDLER}" ; then
@@ -210,7 +142,7 @@ llng_configure_handler() {
         llng_configure_socket handler
         if var_true "${HANDLER_ENABLE_NGINX}" ; then
             sanity_var HANDLER_HOSTNAME "Handler Hostname"
-            llng_bootstrap_configuration handler
+            llng_bootstrap_global_configuration handler
             nginx_site_enable 01-handler
             update_template /etc/nginx/sites.available/01-handler.conf \
                                                                         HANDLER_HOSTNAME \
@@ -274,6 +206,77 @@ llng_configure_instance() {
     config_all=$(printf "%s\n" "${all_lines[@]}")
 }
 
+llng_configure_instance_global_configuration() {
+    case "${CONFIG_GLOBAL_TYPE,,}" in
+        "file" )
+            create_folder \
+                            "${CONFIG_GLOBAL_FILE_PATH}" \
+                            "${NGINX_USER}":"${NGINX_GROUP}" 755
+            truefalse_onezero CONFIG_GLOBAL_FILE_PRETTY_PRINT
+
+            local config_lines=(
+                "type                = File"
+                "dirName             = ${CONFIG_GLOBAL_FILE_PATH}"
+                "prettyPrint         = ${CONFIG_GLOBAL_FILE_PRETTY_PRINT}"
+                "confTimeout         = ${CONFIG_GLOBAL_CONFIG_TIMEOUT}"
+            )
+        ;;
+        "rest" | "remote" )
+            transform_var file \
+                                CONFIG_GLOBAL_REST_HOST \
+                                CONFIG_GLOBAL_REST_PASS \
+                                CONFIG_GLOBAL_REST_USER
+
+            local config_lines=(
+                "type       = REST"
+                "baseUrl    = ${CONFIG_GLOBAL_REST_HOST}"
+                "User       = ${CONFIG_GLOBAL_REST_USER}"
+                "Password   = ${CONFIG_GLOBAL_REST_PASS}"
+            )
+            config_configuration=$(printf "%s\n" "${config_lines[@]}")
+        ;;
+    esac
+
+    case "${CONFIG_GLOBAL_CACHE_TYPE,,}" in
+        file )
+            create_folder \
+                            "${CONFIG_GLOBAL_CACHE_FILE_PATH}" \
+                            "${NGINX_USER}":"${NGINX_GROUP}" 755
+            config_lines+=("localStorage        = Cache::FileCache")
+            config_lines+=("localStorageOptions = { \\")
+            config_lines+=("                        'namespace'           => '${CONFIG_GLOBAL_CACHE_FILE_NAMESPACE}', \\")
+            config_lines+=("                        'cache_root'          => '${CONFIG_GLOBAL_CACHE_FILE_PATH}', \\")
+            config_lines+=("                        'directory_umask'     => '${CONFIG_GLOBAL_CACHE_FILE_DIR_MASK}', \\")
+            config_lines+=("                        'cache_depth'         => ${CONFIG_GLOBAL_CACHE_FILE_DEPTH}, \\")
+            config_lines+=("                        'default_expires_in'  => ${CONFIG_GLOBAL_CACHE_FILE_EXPIRY}, \\")
+            config_lines+=("                      }")
+        ;;
+        none )
+            :
+        ;;
+    esac
+
+    config_configuration=$(printf "%s\n" "${config_lines[@]}")
+
+    if var_false "${CONFIG_GLOBAL_SCHEDULE_PURGE_LOCAL_CACHE}"; then
+        print_debug "Disabling Scheduled Central Cache Purge"
+    else
+        echo "${CONFIG_GLOBAL_SCHEDULE_PURGE_LOCAL_CACHE} ${NGINX_USER} /usr/share/lemonldap-ng/bin/purgeLocalCache  > /dev/null 2>&1" | silent tee /container/cron/lemonldap-purgelocalcache
+    fi
+
+    if var_false "${CONFIG_GLOBAL_SCHEDULE_PURGE_CENTRAL_CACHE}"; then
+        print_debug "Disabling Scheduled Central Cache Purge"
+    else
+        echo "${CONFIG_GLOBAL_SCHEDULE_PURGE_CENTRAL_CACHE} ${NGINX_USER} /usr/share/lemonldap-ng/bin/purgeCentralCache > /dev/null 2>&1" | silent tee /container/cron/lemonldap-purgecentralcache
+    fi
+
+    if var_false "${CONFIG_GLOBAL_SCHEDULE_ROTATE_OIDC_KEYS}"; then
+        print_debug "Disabling Scheduled Rotation of OIDC Keys"
+    else
+        echo  "${CONFIG_GLOBAL_SCHEDULE_ROTATE_OIDC_KEYS} ${NGINX_USER} /usr/share/lemonldap-ng/bin/rotateOidcKeys > /dev/null 2>&1" | silent tee /container/cron/lemonldap-rotateoidckeys
+    fi
+}
+
 llng_configure_manager() {
     if var_true "${ENABLE_MANAGER}" ; then
         print_debug "Configuring Manager"
@@ -288,7 +291,7 @@ llng_configure_manager() {
                             MANAGER_VIEWER_ALLOW_BROWSE \
                             MANAGER_VIEWER_ALLOW_DIFF
         sanity_var MANAGER_HOSTNAME "Manager Hostname"
-        llng_bootstrap_configuration manager
+        llng_bootstrap_global_configuration manager
         llng_configure_socket manager
         nginx_site_enable 03-manager
         update_template /etc/nginx/sites.available/03-manager.conf \
@@ -343,7 +346,7 @@ llng_configure_portal() {
                             PORTAL_REST_ALLOWED_IPS \
                             PORTAL_REST_AUTH_FILE
         sanity_var PORTAL_HOSTNAME "Portal Hostname"
-        llng_bootstrap_configuration portal
+        llng_bootstrap_global_configuration portal
         llng_configure_socket portal
         nginx_site_enable 02-portal
         update_template /etc/nginx/sites.available/02-portal.conf \
@@ -609,14 +612,6 @@ llng_logtype() {
     esac
 }
 
-llng_translate_logLevel() {
-    case "${1,,}" in
-        "debug" | "warn" )  echo "${1^^}" ;;
-        "error" |"notice" ) echo "ERROR" ;;
-        "info" | * )        echo "INFO" ;;
-    esac
-}
-
 llng_override_path() {
     local path_default="$1"
     local path_env="$2"
@@ -672,7 +667,15 @@ llng_setup_container_mode() {
     fi
 }
 
-llng_write_config() {
+llng_translate_logLevel() {
+    case "${1,,}" in
+        "debug" | "warn" )  echo "${1^^}" ;;
+        "error" |"notice" ) echo "ERROR" ;;
+        "info" | * )        echo "INFO" ;;
+    esac
+}
+
+llng_write_instance_config() {
     if [ "${SETUP_TYPE,,}" = "auto" ] ; then
         cat <<EOF | silent sudo -u llng tee "${CONFIG_INSTANCE_PATH}"/"${CONFIG_INSTANCE_FILE}"
 ; Custom Generated LemonLDAP:NG Config Overrides - Do not edit, instead set ENV Vars
