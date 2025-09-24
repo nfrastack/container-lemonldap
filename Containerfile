@@ -176,13 +176,15 @@ RUN echo "" && \
     \
     pip install \
                     --break-system-packages \
-                    sphinx_bootstrap_theme \
+                        sphinx_bootstrap_theme \
                     && \
     \
     ln -s /usr/bin/perl /usr/local/bin/perl && \
     curl -L http://cpanmin.us -o /usr/bin/cpanm && \
     chmod +x /usr/bin/cpanm && \
-    cpanm -n Data::Validate::IP && \
+    cpanm -n \
+                Data::Validate::IP \
+                && \
     cpanm -n \
                 Apache::Session::Generate::MD5 \
                 Authen::Captcha \
@@ -219,8 +221,9 @@ RUN echo "" && \
             && \
     \
     npm install -g \
+                    csso-cli \
                     uglify-js \
-                    csso-cli && \
+                    && \
     \
     mkdir -p /usr/src/authcas && \
     curl ${AUTHCAS_REPO_URL}/AuthCAS-${AUTHCAS_VERSION}.tar.gz | tar xvfz - --strip 1 -C /usr/src/authcas && \
