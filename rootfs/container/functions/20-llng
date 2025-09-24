@@ -661,7 +661,7 @@ llng_setup_container_mode() {
             case "${mode,,}" in
                 "api" | "handler" | "manager" | "portal" | "test")
                     print_debug "Enabling Container Mode for: ${mode^}"
-                    ENABLE_${mode^^}=TRUE
+                    export ENABLE_${mode^^}=TRUE
                 ;;
                 *)
                     print_error "Unknown 'MODE' environment variable - exitting.."
