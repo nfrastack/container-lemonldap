@@ -32,7 +32,7 @@ llng_bootstrap_filesystem(){
     fi
 }
 
-llng_bootstrap_configuration() {
+llng_bootstrap_global_configuration() {
     local conf_dir="${CONFIG_GLOBAL_FILE_PATH}"
     local conf_file="${conf_dir}/lmConf-1.json"
     local target="${1,,}"
@@ -78,7 +78,7 @@ llng_bootstrap_configuration() {
     fi
 }
 
-llng_configure_configuration() {
+llng_configure_global_configuration() {
     case "${CONFIG_GLOBAL_TYPE,,}" in
         "file" )
             create_folder \
