@@ -8,7 +8,7 @@ llng_bootstrap_filesystem(){
                             "${CONFIG_INSTANCE_PATH},\
                             ${DATA_PATH},\
                             ${LOG_PATH}" \
-                        "${NGINX_USER}":"${NGINX_GROUP}" 755
+                        "${NGINX_USER}":"${NGINX_GROUP}" 750
 
         if [ "${CONFIG_INSTANCE_PATH%/}" != "/etc/lemonldap-ng" ] && [ "${CONFIG_INSTANCE_FILE}" != "lemonldap-ng.ini" ]; then
             mkdir -p /etc/lemonldap-ng
@@ -21,6 +21,7 @@ llng_bootstrap_filesystem(){
     else
         create_folder \
                             "/etc/lemonldap-ng,\
+                            /var/lib/lemonldap-ng,
                             /var/lib/lemonldap-ng/cache,\
                             /var/lib/lemonldap-ng/captcha,\
                             /var/lib/lemonldap-ng/conf,
@@ -28,7 +29,7 @@ llng_bootstrap_filesystem(){
                             /var/lib/lemonldap-ng/psessions/lock \
                             /var/lib/lemonldap-ng/sessions/lock \
                             ${LOG_PATH}" \
-                        "${NGINX_USER}":"${NGINX_GROUP}" 755
+                        "${NGINX_USER}":"${NGINX_GROUP}" 700
     fi
 }
 
@@ -211,7 +212,7 @@ llng_configure_instance_global_configuration() {
         "file" )
             create_folder \
                             "${CONFIG_GLOBAL_FILE_PATH}" \
-                            "${NGINX_USER}":"${NGINX_GROUP}" 755
+                            "${NGINX_USER}":"${NGINX_GROUP}" 750
             truefalse_onezero CONFIG_GLOBAL_FILE_PRETTY_PRINT
 
             local config_lines=(
@@ -241,7 +242,7 @@ llng_configure_instance_global_configuration() {
         file )
             create_folder \
                             "${CONFIG_GLOBAL_CACHE_FILE_PATH}" \
-                            "${NGINX_USER}":"${NGINX_GROUP}" 755
+                            "${NGINX_USER}":"${NGINX_GROUP}" 750
             config_lines+=("localStorage        = Cache::FileCache")
             config_lines+=("localStorageOptions = { \\")
             config_lines+=("                        'namespace'           => '${CONFIG_GLOBAL_CACHE_FILE_NAMESPACE}', \\")
@@ -305,10 +306,10 @@ llng_configure_manager() {
         create_logrotate nginx_lemonldap-manager_accesss "${NGINX_LOG_ACCESS_LOCATION}"/access-manager.log nginx-"${NGINX_LOG_ACCESS_FORMAT}" "${NGINX_USER}" "${NGINX_GROUP}"
         create_logrotate nginx_lemonldap-manager_error "${NGINX_LOG_ACCESS_LOCATION}"/error-manager.log nginx-error-standard,nginx-error-alt-standard "${NGINX_USER}" "${NGINX_GROUP}"
 
-        llng_override_path "/usr/share/lemonldap-ng/manager/static/css" "${MANAGER_CSS_PATH%/}" "/container/data/llng/assets/manager/static/css" "$NGINX_USER" "${NGINX_GROUP}" 755
-        llng_override_path "/usr/share/lemonldap-ng/manager/static/logos" "${MANAGER_LOGOS_PATH%/}" "/container/data/llng/assets/manager/static/logos" "$NGINX_USER" "${NGINX_GROUP}" 755
-        llng_override_path "/usr/share/lemonldap-ng/manager/static/languages" "${MANAGER_LANGUAGE_PATH%/}" "/container/data/llng/assets/manager/static/languages" "$NGINX_USER" "${NGINX_GROUP}" 755
-        llng_override_path "/usr/share/lemonldap-ng/manager/templates" "${MANAGER_TEMPLATE_PATH%/}" "/container/data/llng/assets/maanger/templates" "$NGINX_USER" "${NGINX_GROUP}" 755
+        llng_override_path "/usr/share/lemonldap-ng/manager/static/css" "${MANAGER_CSS_PATH%/}" "/container/data/llng/assets/manager/static/css" "$NGINX_USER" "${NGINX_GROUP}" 750
+        llng_override_path "/usr/share/lemonldap-ng/manager/static/logos" "${MANAGER_LOGOS_PATH%/}" "/container/data/llng/assets/manager/static/logos" "$NGINX_USER" "${NGINX_GROUP}" 750
+        llng_override_path "/usr/share/lemonldap-ng/manager/static/languages" "${MANAGER_LANGUAGE_PATH%/}" "/container/data/llng/assets/manager/static/languages" "$NGINX_USER" "${NGINX_GROUP}" 750
+        llng_override_path "/usr/share/lemonldap-ng/manager/templates" "${MANAGER_TEMPLATE_PATH%/}" "/container/data/llng/assets/maanger/templates" "$NGINX_USER" "${NGINX_GROUP}" 750
 
         local config_lines=(
             "[manager]"
@@ -418,11 +419,11 @@ EOF
             fi
         fi
 
-        llng_override_path "/usr/share/lemonldap-ng/portal/static/common/icons" "${PORTAL_ICONS_PATH%/}" "/container/data/llng/assets/portal/static/common/icons" "$NGINX_USER" "${NGINX_GROUP}" 755
-        llng_override_path "/usr/share/lemonldap-ng/portal/static/common/apps" "${PORTAL_APPS_PATH%/}" "/container/data/llng/assets/portal/static/common/apps" "$NGINX_USER" "${NGINX_GROUP}" 755
-        llng_override_path "/usr/share/lemonldap-ng/portal/static/common/logos" "${PORTAL_LOGOS_PATH%/}" "/container/data/llng/assets/portal/static/common/logos" "$NGINX_USER" "${NGINX_GROUP}" 755
-        llng_override_path "/usr/share/lemonldap-ng/portal/static/languages" "${PORTAL_LANGUAGE_PATH%/}" "/container/data/llng/assets/portal/static/languages" "$NGINX_USER" "${NGINX_GROUP}" 755
-        llng_override_path "/usr/share/lemonldap-ng/portal/templates" "${PORTAL_TEMPLATES_PATH%/}" "/container/data/llng/assets/portal/templates" "$NGINX_USER" "${NGINX_GROUP}" 755
+        llng_override_path "/usr/share/lemonldap-ng/portal/static/common/icons" "${PORTAL_ICONS_PATH%/}" "/container/data/llng/assets/portal/static/common/icons" "${NGINX_USER}" "${NGINX_GROUP}" 750
+        llng_override_path "/usr/share/lemonldap-ng/portal/static/common/apps" "${PORTAL_APPS_PATH%/}" "/container/data/llng/assets/portal/static/common/apps" "${NGINX_USER}" "${NGINX_GROUP}" 750
+        llng_override_path "/usr/share/lemonldap-ng/portal/static/common/logos" "${PORTAL_LOGOS_PATH%/}" "/container/data/llng/assets/portal/static/common/logos" "${NGINX_USER}" "${NGINX_GROUP}" 750
+        llng_override_path "/usr/share/lemonldap-ng/portal/static/languages" "${PORTAL_LANGUAGE_PATH%/}" "/container/data/llng/assets/portal/static/languages" "${NGINX_USER}" "${NGINX_GROUP}" 750
+        llng_override_path "/usr/share/lemonldap-ng/portal/templates" "${PORTAL_TEMPLATES_PATH%/}" "/container/data/llng/assets/portal/templates" "${NGINX_USER}" "${NGINX_GROUP}" 750
 
         for tvar in $(set -o posix; env | grep '^PORTAL_TEMPLATE_.*_PATH=.*$' | grep -vE 'BOOTSTRAP|COMMON|_STATIC_PATH=' | awk -F= '{print $1}'); do
             t_name=$(echo "${tvar}" | sed -E 's|^PORTAL_TEMPLATE_(.*)_PATH$|\1|' | tr '[:upper:]' '[:lower:]')
@@ -477,7 +478,7 @@ EOF
         if var_true "${PORTAL_ENABLE_CAPTCHA}" ; then
             create_folder   \
                                 "${PORTAL_CAPTCHA_PATH}" \
-                            "${NGINX_USER}":"${NGINX_GROUP}" 755
+                            "${NGINX_USER}":"${NGINX_GROUP}" 750
         fi
 
         local portal_lines=(
@@ -493,6 +494,11 @@ EOF
 
         case "${PORTAL_SESSIONS_ACTIVE_TYPE,,}" in
             "file" )
+                create_folder   \
+                                    "${PORTAL_SESSIONS_ACTIVE_PATH},\
+                                    ${PORTAL_SESSIONS_ACTIVE_PATH}/lock" \
+                                "${NGINX_USER}":"${NGINX_GROUP}" 750
+
                 portal_lines+=("globalStorage               = Apache::Session::File")
                 portal_lines+=("globalStorageOptions        = { \\")
                 portal_lines+=("                                'Directory'      => '${PORTAL_SESSIONS_ACTIVE_PATH}/', \\")
@@ -503,6 +509,10 @@ EOF
 
         case "${PORTAL_SESSIONS_PERSISTENT_TYPE,,}" in
             "file" )
+                create_folder   \
+                                    "${PORTAL_SESSIONS_PERSISTENT_PATH},\
+                                    ${PORTAL_SESSIONS_PERSISTENT_PATH}/lock" \
+                                "${NGINX_USER}":"${NGINX_GROUP}" 750
                 portal_lines+=("persistentStorage           = Apache::Session::File")
                 portal_lines+=("persistentStorageOptions    = { \\")
                 portal_lines+=("                                'Directory'      => '${PORTAL_SESSIONS_PERSISTENT_PATH}/', \\")
@@ -669,9 +679,9 @@ llng_setup_container_mode() {
 
 llng_translate_logLevel() {
     case "${1,,}" in
-        "debug" | "warn" )  echo "${1^^}" ;;
-        "error" |"notice" ) echo "ERROR" ;;
-        "info" | * )        echo "INFO" ;;
+        "debug" | "warn" )      echo "${1^^}" ;;
+        "error" | "notice" )    echo "ERROR" ;;
+        "info"  | * )           echo "INFO" ;;
     esac
 }
 
