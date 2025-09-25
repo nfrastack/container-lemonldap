@@ -240,15 +240,15 @@ llng_configure_handler() {
 
 llng_configure_instance() {
     print_debug "Configuring Logging"
-    local all_lines=(
+    local instance_lines=(
         "logLevel    = ${LOG_LEVEL}"
         "logger      = $(llng_logtype "${LOG_TYPE}")"
         "userLogger  = $(llng_logtype "${LOG_TYPE}")"
         "checkTime   = ${CONFIG_CHECK_INTERVAL}"
     )
 
-    var_true "${CONFIG_USE_SAFE_JAIL}"          && all_lines+=("useSafeJail = 1")
-    var_true "${CONFIG_ENABLE_CROSS_DOMAIN}"    && all_lines+=("cda         = 1")
+    var_true "${CONFIG_USE_SAFE_JAIL}"          && instance_lines+=("useSafeJail = 1")
+    var_true "${CONFIG_ENABLE_CROSS_DOMAIN}"    && instance_lines+=("cda         = 1")
 
     case "${INSTANCE_SESSIONS_ACTIVE_TYPE,,}" in
         "file" )
@@ -293,7 +293,7 @@ llng_configure_instance() {
         ;;
     esac
 
-    config_all=$(printf "%s\n" "${all_lines[@]}")
+    config_all=$(printf "%s\n" "${instance_lines[@]}")
 }
 
 llng_configure_instance_global_configuration() {

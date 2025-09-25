@@ -318,7 +318,8 @@ RUN echo "" && \
                     static/languages \
                     static/common/logos \
                     templates/bootstrap \
-                    templates/common; do \
+                    templates/common \
+                ; do \
         echo "${LEMONLDAP_VERSION} $(TZ=${TIMEZONE} date +'%Y-%m-%dT%H:%M:%S %Z') " > /container/data/llng/assets/portal/${asset}/.source; \
     done && \
     \
