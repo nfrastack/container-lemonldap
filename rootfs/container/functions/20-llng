@@ -227,11 +227,11 @@ llng_configure_handler() {
                 handler_lines+=(
                                   "localSessionStorageStorage = Cache::FileCache"
                                   "localSessionStorageOptions =  { \\"
-                                  "                                'namespace'           => '${HANDLER_SESSIONS_CACHE_FILE_NAMESPACE}' \\,"
-                                  "                                'cache_root'          => '${HANDLER_SESSIONS_CACHE_FILE_PATH}'      \\,"
-                                  "                                'directory_umask'     => '${HANDLER_SESSIONS_CACHE_FILE_DIR_MASK}'  \\,"
-                                  "                                'cache_depth'         => ${HANDLER_SESSIONS_CACHE_FILE_DEPTH}       \\,"
-                                  "                                'default_expires_in'  => ${HANDLER_SESSIONS_CACHE_FILE_EXPIRY}      \\,"
+                                  "                                'namespace'           => '${HANDLER_SESSIONS_CACHE_FILE_NAMESPACE}', \\"
+                                  "                                'cache_root'          => '${HANDLER_SESSIONS_CACHE_FILE_PATH}', \\"
+                                  "                                'directory_umask'     => '${HANDLER_SESSIONS_CACHE_FILE_DIR_MASK}', \\"
+                                  "                                'cache_depth'         => ${HANDLER_SESSIONS_CACHE_FILE_DEPTH}, \\"
+                                  "                                'default_expires_in'  => ${HANDLER_SESSIONS_CACHE_FILE_EXPIRY}, \\"
                                   "                              }"
                                 )
             ;;
@@ -246,10 +246,10 @@ llng_configure_handler() {
 llng_configure_instance() {
     print_debug "Configuring Logging"
     local instance_lines=(
-        "logLevel    = ${LOG_LEVEL}"
-        "logger      = $(llng_logtype "${LOG_TYPE}")"
-        "userLogger  = $(llng_logtype "${LOG_TYPE}")"
-        "checkTime   = ${CONFIG_CHECK_INTERVAL}"
+        "logLevel                   = ${LOG_LEVEL}"
+        "logger                     = $(llng_logtype "${LOG_TYPE}")"
+        "userLogger                 = $(llng_logtype "${LOG_TYPE}")"
+        "checkTime                  = ${CONFIG_CHECK_INTERVAL}"
     )
 
     var_true "${CONFIG_USE_SAFE_JAIL}"          && instance_lines+=("useSafeJail = 1")
@@ -291,14 +291,14 @@ llng_configure_instance() {
     case "${INSTANCE_SESSIONS_CACHE_TYPE,,}" in
         file )
             instance_lines+=(
-                              "localSessionStorageStorage = Cache::FileCache"
-                              "localSessionStorageOptions =  { \\"
-                              "                                'namespace'           => '${INSTANCE_SESSIONS_CACHE_FILE_NAMESPACE}' \\,"
-                              "                                'cache_root'          => '${INSTANCE_SESSIONS_CACHE_FILE_PATH}'      \\,"
-                              "                                'directory_umask'     => '${INSTANCE_SESSIONS_CACHE_FILE_DIR_MASK}'  \\,"
-                              "                                'cache_depth'         => ${INSTANCE_SESSIONS_CACHE_FILE_DEPTH}       \\,"
-                              "                                'default_expires_in'  => ${INSTANCE_SESSIONS_CACHE_FILE_EXPIRY}      \\,"
-                              "                              }"
+                              "localSessionStorageStorage  = Cache::FileCache"
+                              "localSessionStorageOptions  =  { \\"
+                              "                                 'namespace'           => '${INSTANCE_SESSIONS_CACHE_FILE_NAMESPACE}', \\"
+                              "                                 'cache_root'          => '${INSTANCE_SESSIONS_CACHE_FILE_PATH}', \\"
+                              "                                 'directory_umask'     => '${INSTANCE_SESSIONS_CACHE_FILE_DIR_MASK}', \\"
+                              "                                 'cache_depth'         => ${INSTANCE_SESSIONS_CACHE_FILE_DEPTH}, \\"
+                              "                                 'default_expires_in'  => ${INSTANCE_SESSIONS_CACHE_FILE_EXPIRY}, \\"
+                              "                               }"
                             )
         ;;
     esac
@@ -324,7 +324,7 @@ llng_configure_instance_global_configuration() {
         fi
         config_lines+=(
                         "overlayRealtype     = ${CONFIG_GLOBAL_SECRETS_REAL_TYPE^}"
-                        "overlayDirectory    = '${CONFIG_GLOBAL_SECRETS_PATH}'"
+                        "overlayDirectory    = ${CONFIG_GLOBAL_SECRETS_PATH}"
                         "overlayWrite        = ${secrets_ro}"
                       )
     else
@@ -365,14 +365,15 @@ llng_configure_instance_global_configuration() {
             create_folder \
                             "${CONFIG_GLOBAL_CACHE_FILE_PATH}" \
                             "${NGINX_USER}":"${NGINX_GROUP}" 750
-            config_lines+=("localStorage        = Cache::FileCache
-                            localStorageOptions = { \\
-                                                      'namespace'           => '${CONFIG_GLOBAL_CACHE_FILE_NAMESPACE}', \\
-                                                      'cache_root'          => '${CONFIG_GLOBAL_CACHE_FILE_PATH}', \\
-                                                      'directory_umask'     => '${CONFIG_GLOBAL_CACHE_FILE_DIR_MASK}', \\
-                                                      'cache_depth'         => ${CONFIG_GLOBAL_CACHE_FILE_DEPTH}, \\
-                                                      'default_expires_in'  => ${CONFIG_GLOBAL_CACHE_FILE_EXPIRY}, \\
-                                                  }")
+            config_lines+=("localStorage        = Cache::FileCache"
+                           "localStorageOptions = { \\"
+                           "                         'namespace'           => '${CONFIG_GLOBAL_CACHE_FILE_NAMESPACE}', \\"
+                           "                         'cache_root'          => '${CONFIG_GLOBAL_CACHE_FILE_PATH}', \\"
+                           "                         'directory_umask'     => '${CONFIG_GLOBAL_CACHE_FILE_DIR_MASK}', \\"
+                           "                         'cache_depth'         => ${CONFIG_GLOBAL_CACHE_FILE_DEPTH}, \\"
+                           "                         'default_expires_in'  => ${CONFIG_GLOBAL_CACHE_FILE_EXPIRY}, \\"
+                           "                      }"
+                          )
         ;;
         none )
             :
