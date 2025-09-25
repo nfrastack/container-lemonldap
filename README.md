@@ -283,64 +283,64 @@ For usage with `MODE=API`
 
 For usage with `MODE=PORTAL`
 
-| Parameter                                    | Description                                                                        | Default                                                  | `_FILE` |
-| -------------------------------------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------- | ------- |
-| `PORTAL_HOSTNAME`                            | Portal Hostname eg sso.example.com                                                 |                                                          | x       |
-| `CONTAINER_ENABLE_FIREWALL`                  | Enable Firewall Features for Fail2Ban                                              | `FALSE`                                                  |         |
-| `CONTAINER_ENABLE_FAIL2BAN`                  | Enable Fail2Ban for Portal                                                         | `FALSE`                                                  |         |
-| `PORTAL_SOCKET`                              | Portal socket override                                                             |                                                          | x       |
-| `PORTAL_LOG_TYPE`                            | Override Log type (`CONSOLE`, `FILE`, `SYSLOG`)                                    |                                                          |         |
-| `PORTAL_LOG_LEVEL`                           | Override Log level (`warn`, `notice`, `info`, `error`, `debug`)                    |                                                          |         |
-| `PORTAL_LANGUAGE`                            | Portal language Options: `en` `fr` `it` `vi`                                       | `en`                                                     |         |
-|                                              | `ar` `tr` `pl` `zh_TW` `es` `he` `pt_BR` `ru`                                      |                                                          |         |
-| `PORTAL_CAPTCHA_PATH`                        | Portal captcha path                                                                | `${DATA_PATH}/captcha`                                   |         |
-| `PORTAL_ICONS_PATH`                          | Portal icons path                                                                  | `/usr/share/lemonldap-ng/portal/static/common/icons`     |         |
-| `PORTAL_APPS_PATH`                           | Portal App Icons path                                                              | `/usr/share/lemonldap-ng/portal/static/common/apps`      |         |
-| `PORTAL_LOGOS_PATH`                          | Portal Logos path                                                                  | `/usr/share/lemonldap-ng/portal/static/common/logos`     |         |
-| `PORTAL_LANGUAGE_PATH`                       | Portal Language path                                                               | `/usr/share/lemonldap-ng/portal/static/languages`        |         |
-| `PORTAL_TEMPLATES_PATH`                      | Portal Templates path                                                              | `/usr/share/lemonldap-ng/portal/templates`               |         |
-| `PORTAL_STATIC_PATH`                         | Portal static path                                                                 | `/usr/share/lemonldap-ng/portal/static`                  |         |
-| `PORTAL_STATIC_PREFIX`                       | Portal static prefix                                                               | `/static`                                                |         |
-| `PORTAL_TEMPLATE_BOOTSTRAP_PATH`             | Portal Bootstrap template path                                                     | `/usr/share/lemonldap-ng/portal/templates/bootstrap`     |         |
-| `PORTAL_TEMPLATE_BOOTSTRAP_STATIC_PATH`      | Portal Bootstrap static path                                                       | `/usr/share/lemonldap-ng/portal/static/bootstrap`        |         |
-| `PORTAL_TEMPLATE_COMMON_PATH`                | Portal Common template path                                                        | `/usr/share/lemonldap-ng/portal/templates/common`        |         |
-| `PORTAL_TEMPLATE_COMMON_STATIC_PATH`         | Portal Common static path                                                          | `/usr/share/lemonldap-ng/portal/templates/static/common` |         |
-| `PORTAL_TEMPLATE_CUSTOM_PATH`                | Replace `_CUSTOM_` with the name of your template. This will create a              |                                                          |         |
-|                                              | symbolic lowercase link of the name in your `PORTAL_TEMPLATES_PATH`                |                                                          |         |
-|                                              | that can be referenced for use withihn the manager or config                       |                                                          |         |
-| `PORTAL_TEMPLATE_CUSTOM_STATIC_PATH`         | As above, the location of static folder                                            |                                                          |         |
-| `PORTAL_ENABLE_GITLAB_OAUTH`                 | Enable Gitlab OAuth for portal                                                     | `FALSE`                                                  |         |
-| `PORTAL_SESSIONS_ACTIVE_TYPE`                | Override Instance or Global Config Portal active session type `FILE` or `NONE`     | `NONE`                                                   |         |
-| `PORTAL_SESSIONS_ACTIVE_FILE_PATH`           | Override Instance or Global Config Portal active session path                      | `${INSTANCE_SESSIONS_ACTIVE_FILE_PATH}`                  |         |
-| `PORTAL_SESSIONS_PERSISTENT_TYPE`            | Override Instance or Global Config Portal persistent session type `FILE` or `NONE` | `NONE`                                                   |         |
-| `PORTAL_SESSIONS_PERSISTENT_FILE_PATH`       | Override Instance or Global Config Portal persistent session path                  | `${INSTANCE_SESSIONS_PERSISTENT_FILE_PATH}`              |         |
-| `PORTAL_CUSTOM_CSS_FILE`                     | Custom Portal CSS path+file to use                                                 |                                                          |         |
-| `PORTAL_CUSTOM_JS_FILE`                      | Custom Portal JS path+file to use                                                  |                                                          |         |
-| `PORTAL_ENABLE_CAPTCHA`                      | Enable Captcha Plugin `TRUE`/`FALSE`                                               |                                                          |         |
-| `PORTAL_CAPTCHA_PATH`                        | Path for storing captchas                                                          | `${DATA_PATH}/captcha`                                   |         |
-| `PORTAL_ENABLE_NOTIFICATIONS`                | Enable notifications in portal                                                     | `TRUE`                                                   |         |
-| `PORTAL_GEOIP_PATH`                          | Path for GeoIP Database if used                                                    |                                                          |         |
-| `PORTAL_SKIN`                                | Override Portal Skin Name                                                          |                                                          |         |
-| `PORTAL_NOTIFICATIONS_TYPE`                  | Portal notifications type                                                          | `FILE`                                                   |         |
-| `PORTAL_NOTIFICATIONS_TYPE_FILE_PATH`        | Portal notifications file path                                                     | `${DATA_PATH}/notifications`                             |         |
-| `PORTAL_NOTIFICATIONS_TYPE_FILE_SEPERATOR`   | Portal notifications file separator                                                | `_`                                                      |         |
-| `PORTAL_NOTIFICATIONS_ENABLE_EXPLORER`       | Enable notifications explorer                                                      | `TRUE`                                                   |         |
-| `PORTAL_NOTIFICATIONS_ENABLE_PUBLIC`         | Enable public notifications                                                        | `TRUE`                                                   |         |
-| `PORTAL_NOTIFICATIONS_EXPLORER_MAX_RETRIEVE` | Max notifications to retrieve                                                      | `3`                                                      |         |
-| `PORTAL_ENABLE_REST`                         | Enable REST webserver config                                                       | `FALSE`                                                  |         |
-| `PORTAL_REST_ALLOWED_IPS`                    | Comma seperated list of IP/Network to allow access                                 |                                                          |         |
-|                                              | eg `172.16.0.0/12,192.168.0.253`                                                   |                                                          | x       |
-| `PORTAL_REST_AUTH_FILE`                      | Populate this file manually or with environment variables                          |                                                          |         |
-|                                              | for REST authentication (htpasswd format)                                          | `${DATA_PATH}/portal-rest.htpasswd`                      | x       |
-| `PORTAL_REST_USER01`                         | Username for REST Authentication                                                   |                                                          | x       |
-| `PORTAL_REST_PASS01`                         | Password for REST Authentication                                                   |                                                          | x       |
-| `PORTAL_REST_USER02`                         | Username for REST Authentication                                                   |                                                          | x       |
-| `PORTAL_REST_PASS02`                         | Password for REST Authentication                                                   |                                                          | x       |
-| `PORTAL_REST_USER...`                        | Username for REST Authentication                                                   |                                                          | x       |
-| `PORTAL_REST_PASS...`                        | Password for REST Authentication                                                   |                                                          | x       |
-| `PORTAL_ENABLE_IMPERSONATION`                | Allow impersonation using a seperate theme `TRUE`                                  | `FALSE`                                                  |         |
-| `PORTAL_IMPERSONATE_HOSTNAME`                | Hostname to use to load the custom impersonation theme                             |                                                          | x       |
-| `PORTAL_IMPERSONATE_THEME`                   | Theme to use to load the impersonation theme                                       |                                                          | x       |
+| Parameter                                    | Description                                                                 | Default                                                  | `_FILE` |
+| -------------------------------------------- | --------------------------------------------------------------------------- | -------------------------------------------------------- | ------- |
+| `PORTAL_HOSTNAME`                            | Portal Hostname eg sso.example.com                                          |                                                          | x       |
+| `CONTAINER_ENABLE_FIREWALL`                  | Enable Firewall Features for Fail2Ban                                       | `FALSE`                                                  |         |
+| `CONTAINER_ENABLE_FAIL2BAN`                  | Enable Fail2Ban for Portal                                                  | `FALSE`                                                  |         |
+| `PORTAL_SOCKET`                              | Portal socket override                                                      |                                                          | x       |
+| `PORTAL_LOG_TYPE`                            | Override Log type (`CONSOLE`, `FILE`, `SYSLOG`)                             |                                                          |         |
+| `PORTAL_LOG_LEVEL`                           | Override Log level (`warn`, `notice`, `info`, `error`, `debug`)             |                                                          |         |
+| `PORTAL_LANGUAGE`                            | Portal language Options: `en` `fr` `it` `vi`                                | `en`                                                     |         |
+|                                              | `ar` `tr` `pl` `zh_TW` `es` `he` `pt_BR` `ru`                               |                                                          |         |
+| `PORTAL_CAPTCHA_PATH`                        | Portal captcha path                                                         | `${DATA_PATH}/captcha`                                   |         |
+| `PORTAL_ICONS_PATH`                          | Portal icons path                                                           | `/usr/share/lemonldap-ng/portal/static/common/icons`     |         |
+| `PORTAL_APPS_PATH`                           | Portal App Icons path                                                       | `/usr/share/lemonldap-ng/portal/static/common/apps`      |         |
+| `PORTAL_LOGOS_PATH`                          | Portal Logos path                                                           | `/usr/share/lemonldap-ng/portal/static/common/logos`     |         |
+| `PORTAL_LANGUAGE_PATH`                       | Portal Language path                                                        | `/usr/share/lemonldap-ng/portal/static/languages`        |         |
+| `PORTAL_TEMPLATES_PATH`                      | Portal Templates path                                                       | `/usr/share/lemonldap-ng/portal/templates`               |         |
+| `PORTAL_STATIC_PATH`                         | Portal static path                                                          | `/usr/share/lemonldap-ng/portal/static`                  |         |
+| `PORTAL_STATIC_PREFIX`                       | Portal static prefix                                                        | `/static`                                                |         |
+| `PORTAL_TEMPLATE_BOOTSTRAP_PATH`             | Portal Bootstrap template path                                              | `/usr/share/lemonldap-ng/portal/templates/bootstrap`     |         |
+| `PORTAL_TEMPLATE_BOOTSTRAP_STATIC_PATH`      | Portal Bootstrap static path                                                | `/usr/share/lemonldap-ng/portal/static/bootstrap`        |         |
+| `PORTAL_TEMPLATE_COMMON_PATH`                | Portal Common template path                                                 | `/usr/share/lemonldap-ng/portal/templates/common`        |         |
+| `PORTAL_TEMPLATE_COMMON_STATIC_PATH`         | Portal Common static path                                                   | `/usr/share/lemonldap-ng/portal/templates/static/common` |         |
+| `PORTAL_TEMPLATE_CUSTOM_PATH`                | Replace `_CUSTOM_` with the name of your template. This will create a       |                                                          |         |
+|                                              | symbolic lowercase link of the name in your `PORTAL_TEMPLATES_PATH`         |                                                          |         |
+|                                              | that can be referenced for use withihn the manager or config                |                                                          |         |
+| `PORTAL_TEMPLATE_CUSTOM_STATIC_PATH`         | As above, the location of static folder                                     |                                                          |         |
+| `PORTAL_ENABLE_GITLAB_OAUTH`                 | Enable Gitlab OAuth for portal                                              | `FALSE`                                                  |         |
+| `PORTAL_SESSIONS_ACTIVE_TYPE`                | Override Instance or Global Config active session type `FILE` or `NONE`     | `NONE`                                                   |         |
+| `PORTAL_SESSIONS_ACTIVE_FILE_PATH`           | Override Instance or Global Config active session path                      | `${INSTANCE_SESSIONS_ACTIVE_FILE_PATH}`                  |         |
+| `PORTAL_SESSIONS_PERSISTENT_TYPE`            | Override Instance or Global Config persistent session type `FILE` or `NONE` | `NONE`                                                   |         |
+| `PORTAL_SESSIONS_PERSISTENT_FILE_PATH`       | Override Instance or Global Config persistent session path                  | `${INSTANCE_SESSIONS_PERSISTENT_FILE_PATH}`              |         |
+| `PORTAL_CUSTOM_CSS_FILE`                     | Custom Portal CSS path+file to use                                          |                                                          |         |
+| `PORTAL_CUSTOM_JS_FILE`                      | Custom Portal JS path+file to use                                           |                                                          |         |
+| `PORTAL_ENABLE_CAPTCHA`                      | Enable Captcha Plugin `TRUE`/`FALSE`                                        |                                                          |         |
+| `PORTAL_CAPTCHA_PATH`                        | Path for storing captchas                                                   | `${DATA_PATH}/captcha`                                   |         |
+| `PORTAL_ENABLE_NOTIFICATIONS`                | Enable notifications in portal                                              | `TRUE`                                                   |         |
+| `PORTAL_GEOIP_PATH`                          | Path for GeoIP Database if used                                             |                                                          |         |
+| `PORTAL_SKIN`                                | Override Portal Skin Name                                                   |                                                          |         |
+| `PORTAL_NOTIFICATIONS_TYPE`                  | Portal notifications type                                                   | `FILE`                                                   |         |
+| `PORTAL_NOTIFICATIONS_FILE_PATH`        | Portal notifications file path                                              | `${DATA_PATH}/notifications`                             |         |
+| `PORTAL_NOTIFICATIONS_FILE_SEPERATOR`   | Portal notifications file separator                                         | `_`                                                      |         |
+| `PORTAL_NOTIFICATIONS_ENABLE_EXPLORER`       | Enable notifications explorer                                               | `TRUE`                                                   |         |
+| `PORTAL_NOTIFICATIONS_ENABLE_PUBLIC`         | Enable public notifications                                                 | `TRUE`                                                   |         |
+| `PORTAL_NOTIFICATIONS_EXPLORER_MAX_RETRIEVE` | Max notifications to retrieve                                               | `3`                                                      |         |
+| `PORTAL_ENABLE_REST`                         | Enable REST webserver config                                                | `FALSE`                                                  |         |
+| `PORTAL_REST_ALLOWED_IPS`                    | Comma seperated list of IP/Network to allow access                          |                                                          |         |
+|                                              | eg `172.16.0.0/12,192.168.0.253`                                            |                                                          | x       |
+| `PORTAL_REST_AUTH_FILE`                      | Populate this file manually or with environment variables                   |                                                          |         |
+|                                              | for REST authentication (htpasswd format)                                   | `${DATA_PATH}/portal-rest.htpasswd`                      | x       |
+| `PORTAL_REST_USER01`                         | Username for REST Authentication                                            |                                                          | x       |
+| `PORTAL_REST_PASS01`                         | Password for REST Authentication                                            |                                                          | x       |
+| `PORTAL_REST_USER02`                         | Username for REST Authentication                                            |                                                          | x       |
+| `PORTAL_REST_PASS02`                         | Password for REST Authentication                                            |                                                          | x       |
+| `PORTAL_REST_USER...`                        | Username for REST Authentication                                            |                                                          | x       |
+| `PORTAL_REST_PASS...`                        | Password for REST Authentication                                            |                                                          | x       |
+| `PORTAL_ENABLE_IMPERSONATION`                | Allow impersonation using a seperate theme `TRUE`                           | `FALSE`                                                  |         |
+| `PORTAL_IMPERSONATE_HOSTNAME`                | Hostname to use to load the custom impersonation theme                      |                                                          | x       |
+| `PORTAL_IMPERSONATE_THEME`                   | Theme to use to load the impersonation theme                                |                                                          | x       |
 
 >> With impersonation, if you enable it, it will add a new field to your login screen, which may not be what you want if this is a production system. You will need to create two custom themes (one as a replica of bootstrap, and one for impersonation). In the custom theme, make modifications to `login.tpl` to stop it from loading impersonation.tpl, yet in your impersonation theme, leave it in there. Then, when one of your admin/support team visits the custom `IMPERSONATE_HOSTNAME` you have defined it will load the full theme with allows to impersonate, where as the default theme will not show this.
 

@@ -68,7 +68,6 @@ llng_bootstrap_global_configuration() {
             local file_count
             file_count=$(find "${conf_dir}/" -type f | wc -l)
             if [ "${file_count}" -eq 1 ] && [ -f "${conf_file}" ]; then
-
                 case "${target}" in
                     portal)
                         sudo -u "${NGINX_USER}" sed -i \
@@ -198,8 +197,8 @@ llng_configure_handler() {
                 handler_lines+=(
                                   "globalStorage               = Apache::Session::File"
                                   "globalStorageOptions        = { \\"
-                                  "                                'Directory'      => '${HANDLER_SESSIONS_ACTIVE_PATH}/', \\"
-                                  "                                'LockDirectory'  => '${HANDLER_SESSIONS_ACTIVE_PATH}/lock/', \\"
+                                  "                                'Directory'      => '${HANDLER_SESSIONS_ACTIVE_FILE_PATH%/}/', \\"
+                                  "                                'LockDirectory'  => '${HANDLER_SESSIONS_ACTIVE_FILE_PATH%/}/lock/', \\"
                                   "                              }"
                                 )
             ;;
@@ -214,8 +213,8 @@ llng_configure_handler() {
                 handler_lines+=(
                                   "persistentStorage           = Apache::Session::File"
                                   "persistentStorageOptions    = { \\"
-                                  "                                'Directory'      => '${HANDLER_SESSIONS_PERSISTENT_PATH}/', \\"
-                                  "                                'LockDirectory'  => '${HANDLER_SESSIONS_PERSISTENT_PATH}/lock/', \\"
+                                  "                                'Directory'      => '${HANDLER_SESSIONS_PERSISTENT_FILE_PATH%/}/', \\"
+                                  "                                'LockDirectory'  => '${HANDLER_SESSIONS_PERSISTENT_FILE_PATH%/}/lock/', \\"
                                   "                              }"
                                 )
             ;;
@@ -227,7 +226,7 @@ llng_configure_handler() {
                                   "localSessionStorageStorage = Cache::FileCache"
                                   "localSessionStorageOptions =  { \\"
                                   "                                'namespace'           => '${HANDLER_SESSIONS_CACHE_FILE_NAMESPACE}', \\"
-                                  "                                'cache_root'          => '${HANDLER_SESSIONS_CACHE_FILE_PATH}', \\"
+                                  "                                'cache_root'          => '${HANDLER_SESSIONS_CACHE_FILE_PATH%/}', \\"
                                   "                                'directory_umask'     => '${HANDLER_SESSIONS_CACHE_FILE_DIR_MASK}', \\"
                                   "                                'cache_depth'         => ${HANDLER_SESSIONS_CACHE_FILE_DEPTH}, \\"
                                   "                                'default_expires_in'  => ${HANDLER_SESSIONS_CACHE_FILE_EXPIRY}, \\"
@@ -247,7 +246,7 @@ llng_configure_instance() {
     local instance_lines=(
         "logLevel                   = ${LOG_LEVEL}"
         "logger                     = $(llng_logtype "${LOG_TYPE}")"
-        "userLogger                 = $(llng_logtype "${LOG_TYPE}")"
+        "userLogger                 = $(llng_logtype "${LOG_USER_TYPE}")"
         "checkTime                  = ${CONFIG_CHECK_INTERVAL}"
     )
 
@@ -264,8 +263,8 @@ llng_configure_instance() {
             instance_lines+=(
                               "globalStorage               = Apache::Session::File"
                               "globalStorageOptions        = { \\"
-                              "                                'Directory'      => '${INSTANCE_SESSIONS_ACTIVE_PATH}/', \\"
-                              "                                'LockDirectory'  => '${INSTANCE_SESSIONS_ACTIVE_PATH}/lock/', \\"
+                              "                                'Directory'      => '${INSTANCE_SESSIONS_ACTIVE_FILE_PATH%/}/', \\"
+                              "                                'LockDirectory'  => '${INSTANCE_SESSIONS_ACTIVE_FILE_PATH%/}/lock/', \\"
                               "                              }"
                             )
         ;;
@@ -280,8 +279,8 @@ llng_configure_instance() {
             instance_lines+=(
                               "persistentStorage           = Apache::Session::File"
                               "persistentStorageOptions    = { \\"
-                              "                                'Directory'      => '${INSTANCE_SESSIONS_PERSISTENT_PATH}/', \\"
-                              "                                'LockDirectory'  => '${INSTANCE_SESSIONS_PERSISTENT_PATH}/lock/', \\"
+                              "                                'Directory'      => '${INSTANCE_SESSIONS_PERSISTENT_FILE_PATH%/}/', \\"
+                              "                                'LockDirectory'  => '${INSTANCE_SESSIONS_PERSISTENT_FILE_PATH%/}/lock/', \\"
                               "                              }"
                             )
         ;;
@@ -293,7 +292,7 @@ llng_configure_instance() {
                               "localSessionStorageStorage  = Cache::FileCache"
                               "localSessionStorageOptions  =  { \\"
                               "                                 'namespace'           => '${INSTANCE_SESSIONS_CACHE_FILE_NAMESPACE}', \\"
-                              "                                 'cache_root'          => '${INSTANCE_SESSIONS_CACHE_FILE_PATH}', \\"
+                              "                                 'cache_root'          => '${INSTANCE_SESSIONS_CACHE_FILE_PATH%/}', \\"
                               "                                 'directory_umask'     => '${INSTANCE_SESSIONS_CACHE_FILE_DIR_MASK}', \\"
                               "                                 'cache_depth'         => ${INSTANCE_SESSIONS_CACHE_FILE_DEPTH}, \\"
                               "                                 'default_expires_in'  => ${INSTANCE_SESSIONS_CACHE_FILE_EXPIRY}, \\"
@@ -316,7 +315,7 @@ llng_configure_instance_global_configuration() {
             overlay)    echo "Overlay" ;;
             rest)       echo "REST" ;;
             soap)       echo "SOAP" ;;
-            *)          echo "${val^}" ;;
+            *)          echo "${ftype^}" ;;
         esac
     }
 
@@ -385,7 +384,7 @@ llng_configure_instance_global_configuration() {
             config_lines+=("localStorage        = Cache::FileCache"
                            "localStorageOptions = { \\"
                            "                         'namespace'           => '${CONFIG_GLOBAL_CACHE_FILE_NAMESPACE}', \\"
-                           "                         'cache_root'          => '${CONFIG_GLOBAL_CACHE_FILE_PATH}', \\"
+                           "                         'cache_root'          => '${CONFIG_GLOBAL_CACHE_FILE_PATH%/}', \\"
                            "                         'directory_umask'     => '${CONFIG_GLOBAL_CACHE_FILE_DIR_MASK}', \\"
                            "                         'cache_depth'         => ${CONFIG_GLOBAL_CACHE_FILE_DEPTH}, \\"
                            "                         'default_expires_in'  => ${CONFIG_GLOBAL_CACHE_FILE_EXPIRY}, \\"
@@ -651,8 +650,8 @@ EOF
                 portal_lines+=(
                                 "globalStorage               = Apache::Session::File"
                                 "globalStorageOptions        = { \\"
-                                "                                'Directory'      => '${PORTAL_SESSIONS_ACTIVE_PATH}/', \\"
-                                "                                'LockDirectory'  => '${PORTAL_SESSIONS_ACTIVE_PATH}/lock/', \\"
+                                "                                'Directory'      => '${PORTAL_SESSIONS_ACTIVE_FILE_PATH%/}/', \\"
+                                "                                'LockDirectory'  => '${PORTAL_SESSIONS_ACTIVE_FILE_PATH%/}/lock/', \\"
                                 "                              }"
                               )
             ;;
@@ -667,8 +666,8 @@ EOF
                 portal_lines+=(
                                 "persistentStorage           = Apache::Session::File"
                                 "persistentStorageOptions    = { \\"
-                                "                                'Directory'      => '${PORTAL_SESSIONS_PERSISTENT_PATH}/', \\"
-                                "                                'LockDirectory'  => '${PORTAL_SESSIONS_PERSISTENT_PATH}/lock/', \\"
+                                "                                'Directory'      => '${PORTAL_SESSIONS_PERSISTENT_FILE_PATH%/}/', \\"
+                                "                                'LockDirectory'  => '${PORTAL_SESSIONS_PERSISTENT_FILE_PATH%/}/lock/', \\"
                                 "                              }"
                               )
             ;;
@@ -678,13 +677,13 @@ EOF
             portal_lines+=("notification                = 1")
             case "${PORTAL_NOTIFICATIONS_TYPE,,}" in
                 file )
-                portal_lines+=(
-                                "notificationStorage         = File"
-                                "notificationStorageOptions  = { \\"
-                                "                                'dirName'           => '${PORTAL_NOTIFICATIONS_TYPE_FILE_PATH}' ,\\"
-                                "                                'fileNameSeperator' => '${PORTAL_NOTIFICATIONS_TYPE_FILE_SEPERATOR}' ,\\"
-                                "                              }"
-                              )
+                    portal_lines+=(
+                                    "notificationStorage         = File"
+                                    "notificationStorageOptions  = { \\"
+                                    "                                'dirName'           => '${PORTAL_NOTIFICATIONS_FILE_PATH%/}' ,\\"
+                                    "                                'fileNameSeperator' => '${PORTAL_NOTIFICATIONS_FILE_SEPERATOR}' ,\\"
+                                    "                              }"
+                                  )
                 ;;
             esac
 
@@ -712,7 +711,6 @@ llng_configure_socket() {
         manager)    conf_file="03-manager.conf" ;;
         handler)    conf_file="01-handler.conf" ;;
         test)       conf_file="05-test.conf" ;;
-        *)          print_error "Unknown site '${site}' for socket configuration"; return 1 ;;
     esac
 
     socket_val="${!socket_var}"
