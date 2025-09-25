@@ -142,29 +142,33 @@ By Default this image is ready to run out of the box, without having to alter an
 
 #### Configuration Variables
 
-| Parameter                                    | Description                                                                    | Default             | `_FILE` |
-| -------------------------------------------- | ------------------------------------------------------------------------------ | ------------------- | ------- |
-| `CONFIG_CHECK_INTERVAL`                      | Interval for config checks in seconds                                          | `1`                 |         |
-| `CONFIG_INSTANCE_PATH`                       | Instance config path                                                           | `/config/`          |         |
-| `CONFIG_INSTANCE_FILE`                       | Instance config file                                                           | `instance.cfg`      |         |
-| `CONFIG_GLOBAL_TYPE`                         | Global config type `FILE` or `REST`                                            | `FILE`              |         |
-| `CONFIG_GLOBAL_CONFIG_TIMEOUT`               | Global config timeout in seconds                                               | `10`                |         |
-| `CONFIG_GLOBAL_FILE_PATH`                    | Global file path                                                               | `${DATA_PATH}/conf` |         |
-| `CONFIG_GLOBAL_FILE_PRETTY_PRINT`            | Pretty print config file                                                       | `TRUE`              |         |
-| `CONFIG_GLOBAL_REST_HOST`                    | Hostname of Portal REST Server eg `https://sso.example.com/index.psgi/config/` |                     | x       |
-| `CONFIG_GLOBAL_REST_USER`                    | Username to fetch Configuration Information                                    |                     | x       |
-| `CONFIG_GLOBAL_REST_PASS`                    | Password to fetch Configuration Information                                    |                     | x       |
-| `CONFIG_GLOBAL_CACHE_TYPE`                   | Global cache type `FILE` `NONE`                                                | `FILE`              |         |
-| `CONFIG_GLOBAL_CACHE_FILE_PATH`              | Global cache file path                                                         | `/cache/`           |         |
-| `CONFIG_GLOBAL_CACHE_FILE_NAMESPACE`         | Global cache file namespace                                                    | `config`            |         |
-| `CONFIG_GLOBAL_CACHE_FILE_DEPTH`             | Global cache file depth                                                        | `0`                 |         |
-| `CONFIG_GLOBAL_CACHE_FILE_DIR_MASK`          | Global cache file dir mask                                                     | `007`               |         |
-| `CONFIG_GLOBAL_CACHE_FILE_EXPIRY`            | Global cache file expiry                                                       | `600`               |         |
-| `CONFIG_GLOBAL_SCHEDULE_PURGE_CENTRAL_CACHE` | Cron expression to purge central cache (or `FALSE` to disable)                 | `*/10 * * * *`      |         |
-| `CONFIG_GLOBAL_SCHEDULE_ROTATE_OIDC_KEYS`    | Cron expresstion to rotate OIDC keys (or `FALSE` to disable)                   | `5 5 * * 6`         |         |
-| `CONFIG_GLOBAL_SCHEDULE_PURGE_LOCAL_CACHE`   | Cron expression to purge local cache (or `FALSE` to disable)                   | `1 * * * *`         |         |
-| `CONFIG_ENABLE_CROSS_DOMAIN`                 | (instance) Enable Cross Domain Access (CDA) `TRUE`/`FALSE`                     |                     |         |
-| `CONFIG_USE_SAFE_JAIL`                       | (instance) Use safe jail                                                       | `TRUE`              |         |
+| Parameter                                    | Description                                                                    | Default                  | `_FILE` |
+| -------------------------------------------- | ------------------------------------------------------------------------------ | ------------------------ | ------- |
+| `CONFIG_CHECK_INTERVAL`                      | Interval for config checks in seconds                                          | `1`                      |         |
+| `CONFIG_INSTANCE_PATH`                       | Instance config path                                                           | `/config/`               |         |
+| `CONFIG_INSTANCE_FILE`                       | Instance config file                                                           | `instance.cfg`           |         |
+| `CONFIG_GLOBAL_TYPE`                         | Global config type `FILE` or `REST`                                            | `FILE`                   |         |
+| `CONFIG_GLOBAL_CONFIG_TIMEOUT`               | Global config timeout in seconds                                               | `10`                     |         |
+| `CONFIG_GLOBAL_FILE_PATH`                    | Global file path                                                               | `${DATA_PATH}/conf`      |         |
+| `CONFIG_GLOBAL_FILE_PRETTY_PRINT`            | Pretty print config file                                                       | `TRUE`                   |         |
+| `CONFIG_GLOBAL_ENABLE_SECRETS`               | Enable Secrets / Overlay mode                                                  | `TRUE`                   |         |
+| `CONFIG_GLOBAL_SECRETS_PATH`                 | Path name to store file per parameter (filename == keyname)                    | `/var/run/secrets/llng/` | x       |
+| `CONFIG_GLOBAL_SECRETS_READONLY`             | Allow configuration to write to secrets parameters                             | `FALSE`                  |         |
+| `CONFIG_GLOBAL_SECRETS_REAL_TYPE`            | The real configuration backend used to support secrets/overlay                 | `${CONFIG_GLOBAL_TYPE}`  |         |
+| `CONFIG_GLOBAL_REST_HOST`                    | Hostname of Portal REST Server eg `https://sso.example.com/index.psgi/config/` |                          | x       |
+| `CONFIG_GLOBAL_REST_USER`                    | Username to fetch Configuration Information                                    |                          | x       |
+| `CONFIG_GLOBAL_REST_PASS`                    | Password to fetch Configuration Information                                    |                          | x       |
+| `CONFIG_GLOBAL_CACHE_TYPE`                   | Global cache type `FILE` `NONE`                                                | `FILE`                   |         |
+| `CONFIG_GLOBAL_CACHE_FILE_PATH`              | Global cache file path                                                         | `/cache/`                |         |
+| `CONFIG_GLOBAL_CACHE_FILE_NAMESPACE`         | Global cache file namespace                                                    | `config`                 |         |
+| `CONFIG_GLOBAL_CACHE_FILE_DEPTH`             | Global cache file depth                                                        | `0`                      |         |
+| `CONFIG_GLOBAL_CACHE_FILE_DIR_MASK`          | Global cache file dir mask                                                     | `007`                    |         |
+| `CONFIG_GLOBAL_CACHE_FILE_EXPIRY`            | Global cache file expiry                                                       | `600`                    |         |
+| `CONFIG_GLOBAL_SCHEDULE_PURGE_CENTRAL_CACHE` | Cron expression to purge central cache (or `FALSE` to disable)                 | `*/10 * * * *`           |         |
+| `CONFIG_GLOBAL_SCHEDULE_ROTATE_OIDC_KEYS`    | Cron expresstion to rotate OIDC keys (or `FALSE` to disable)                   | `5 5 * * 6`              |         |
+| `CONFIG_GLOBAL_SCHEDULE_PURGE_LOCAL_CACHE`   | Cron expression to purge local cache (or `FALSE` to disable)                   | `1 * * * *`              |         |
+| `CONFIG_ENABLE_CROSS_DOMAIN`                 | (instance) Enable Cross Domain Access (CDA) `TRUE`/`FALSE`                     |                          |         |
+| `CONFIG_USE_SAFE_JAIL`                       | (instance) Use safe jail                                                       | `TRUE`                   |         |
 
 #### Socket & Networking Variables
 
@@ -259,7 +263,7 @@ For usage with `MODE=MANAGER`
 | `MANAGER_CUSTOM_PORTAL_URL`   | Custom Portal URL in Manager header                             |                                                    | x       |
 | `MANAGER_STATIC_PREFIX`       | Manager static prefix                                           | `/static`                                          |         |
 | `MANAGER_CSS_PATH`            | Manager CSS path                                                | `/usr/share/lemonldap-ng/manager/static/css`       |         |
-| `MANAGER_CUSTOM_CSS_FILE`     | Custom Manager CSS path+file to use                             |                                                    | x       |
+| `MANAGER_CUSTOM_CSS_FILE`     | Custom Manager CSS path+file to use                             |                                                    |         |
 | `MANAGER_LANGUAGE_PATH`       | Manager Language path                                           | `/usr/share/lemonldap-ng/manager/static/languages` |         |
 | `MANAGER_LOGOS_PATH`          | Manager Logos path                                              | `/usr/share/lemonldap-ng/manager/static/logos`     |         |
 | `MANAGER_TEMPLATE_PATH`       | Manager Template path                                           | `/usr/share/lemonldap-ng/manager/templates`        |         |
@@ -310,9 +314,13 @@ For usage with `MODE=PORTAL`
 | `PORTAL_SESSIONS_ACTIVE_FILE_PATH`           | Override Instance or Global Config Portal active session path                      | `${INSTANCE_SESSIONS_ACTIVE_FILE_PATH}`                  |         |
 | `PORTAL_SESSIONS_PERSISTENT_TYPE`            | Override Instance or Global Config Portal persistent session type `FILE` or `NONE` | `NONE`                                                   |         |
 | `PORTAL_SESSIONS_PERSISTENT_FILE_PATH`       | Override Instance or Global Config Portal persistent session path                  | `${INSTANCE_SESSIONS_PERSISTENT_FILE_PATH}`              |         |
+| `PORTAL_CUSTOM_CSS_FILE`                     | Custom Portal CSS path+file to use                                                 |                                                          |         |
+| `PORTAL_CUSTOM_JS_FILE`                      | Custom Portal JS path+file to use                                                  |                                                          |         |
 | `PORTAL_ENABLE_CAPTCHA`                      | Enable Captcha Plugin `TRUE`/`FALSE`                                               |                                                          |         |
 | `PORTAL_CAPTCHA_PATH`                        | Path for storing captchas                                                          | `${DATA_PATH}/captcha`                                   |         |
 | `PORTAL_ENABLE_NOTIFICATIONS`                | Enable notifications in portal                                                     | `TRUE`                                                   |         |
+| `PORTAL_GEOIP_PATH`                          | Path for GeoIP Database if used                                                    |                                                          |         |
+| `PORTAL_SKIN`                                | Override Portal Skin Name                                                          |                                                          |         |
 | `PORTAL_NOTIFICATIONS_TYPE`                  | Portal notifications type                                                          | `FILE`                                                   |         |
 | `PORTAL_NOTIFICATIONS_TYPE_FILE_PATH`        | Portal notifications file path                                                     | `${DATA_PATH}/notifications`                             |         |
 | `PORTAL_NOTIFICATIONS_TYPE_FILE_SEPERATOR`   | Portal notifications file separator                                                | `_`                                                      |         |
