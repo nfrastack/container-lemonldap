@@ -54,10 +54,9 @@ llng_bootstrap_global_configuration() {
                             .localSessionStorage,
                             .localSessionStorageOptions,
                             .locationRules["test2.example.com"],
-                            .notificationStorage,
-                            .notificationStorageOptions,
                             .persistentStorage,
-                            .persistentStorageOptions,
+                            .persistentStorageOptions.Directory,
+                            .persistentStorageOptions.LockDirectory,
                         )
                     ' "${conf_file}"
                 sudo -u "${NGINX_USER}" sed -i \
