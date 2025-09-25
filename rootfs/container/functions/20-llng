@@ -50,18 +50,18 @@ llng_bootstrap_global_configuration() {
                                                 "${conf_file}"
                 sudo -u "${NGINX_USER}" jq '
                         del(
-                        .locationRules["test2.example.com"],
-                        .localSessionStorage,
-                        .localSessionStorageOptions,
-                        .globalStorageOptions.Directory,
-                        .globalStorageOptions.LockDirectory,
-                        .notification,
-                        .notificationStorage,
-                        .notificationStorageOptions,
-                        .persistentStorage,
-                        .persistentStorageOptions,
-                        .exportedHeaders["test2.example.com"],
-                        .applicationList["1sample"].test2
+                            .applicationList["1sample"].test2
+                            .exportedHeaders["test2.example.com"],
+                            .globalStorageOptions.Directory,
+                            .globalStorageOptions.LockDirectory,
+                            .localSessionStorage,
+                            .localSessionStorageOptions,
+                            .locationRules["test2.example.com"],
+                            .notification,
+                            .notificationStorage,
+                            .notificationStorageOptions,
+                            .persistentStorage,
+                            .persistentStorageOptions,
                         )
                     ' "${conf_file}"
             fi
