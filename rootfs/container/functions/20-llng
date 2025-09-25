@@ -54,7 +54,6 @@ llng_bootstrap_global_configuration() {
                             .localSessionStorage,
                             .localSessionStorageOptions,
                             .locationRules["test2.example.com"],
-                            .notification,
                             .notificationStorage,
                             .notificationStorageOptions,
                             .persistentStorage,
@@ -252,8 +251,8 @@ llng_configure_instance() {
         "checkTime                  = ${CONFIG_CHECK_INTERVAL}"
     )
 
-    var_true "${CONFIG_USE_SAFE_JAIL}"          && instance_lines+=("useSafeJail = 1")
-    var_true "${CONFIG_ENABLE_CROSS_DOMAIN}"    && instance_lines+=("cda         = 1")
+    var_true "${CONFIG_USE_SAFE_JAIL}"          && instance_lines+=("useSafeJail                = 1")
+    var_true "${CONFIG_ENABLE_CROSS_DOMAIN}"    && instance_lines+=("cda                        = 1")
 
     case "${INSTANCE_SESSIONS_ACTIVE_TYPE,,}" in
         "file" )
@@ -307,15 +306,30 @@ llng_configure_instance() {
 }
 
 llng_configure_instance_global_configuration() {
+    format_type() {
+        local ftype="${1:-}"
+        case "${ftype,,}" in
+            dbi)        echo "DBI" ;;
+            file)       echo "File" ;;
+            ldap)       echo "LDAP" ;;
+            local)      echo "Local" ;;
+            overlay)    echo "Overlay" ;;
+            rest)       echo "REST" ;;
+            soap)       echo "SOAP" ;;
+            *)          echo "${val^}" ;;
+        esac
+    }
+
     local config_lines=()
     local global_type
 
     if var_true "${CONFIG_GLOBAL_ENABLE_SECRETS}" ; then
         create_folder \
-                        "${CONFIG_GLOBAL_SECRETS_PATH}" \
-                        "root":"${NGINX_GROUP}" 750
+            "${CONFIG_GLOBAL_SECRETS_PATH}" \
+            "root":"${NGINX_GROUP}" 750
 
-        global_type="Overlay"
+        global_type="$(format_type "overlay")"
+        local overlay_realtype="$(format_type "${CONFIG_GLOBAL_SECRETS_REAL_TYPE}")"
         local secrets_ro
         if var_true "${CONFIG_GLOBAL_SECRETS_READ_ONLY}"; then
             secrets_ro=0
@@ -323,12 +337,12 @@ llng_configure_instance_global_configuration() {
             secrets_ro=1
         fi
         config_lines+=(
-                        "overlayRealtype     = ${CONFIG_GLOBAL_SECRETS_REAL_TYPE^}"
-                        "overlayDirectory    = ${CONFIG_GLOBAL_SECRETS_PATH}"
-                        "overlayWrite        = ${secrets_ro}"
-                      )
+            "overlayRealtype     = ${overlay_realtype}"
+            "overlayDirectory    = ${CONFIG_GLOBAL_SECRETS_PATH}"
+            "overlayWrite        = ${secrets_ro}"
+        )
     else
-        global_type="${CONFIG_GLOBAL_TYPE^}"
+        global_type="$(format_type "${CONFIG_GLOBAL_TYPE}")"
     fi
 
     case "${CONFIG_GLOBAL_TYPE,,}" in
@@ -339,20 +353,23 @@ llng_configure_instance_global_configuration() {
             truefalse_onezero CONFIG_GLOBAL_FILE_PRETTY_PRINT
 
             config_lines+=(
-                "type                = ${global_type^}"
+                "type                = ${global_type}"
                 "dirName             = ${CONFIG_GLOBAL_FILE_PATH}"
                 "prettyPrint         = ${CONFIG_GLOBAL_FILE_PRETTY_PRINT}"
                 "confTimeout         = ${CONFIG_GLOBAL_CONFIG_TIMEOUT}"
             )
         ;;
+    esac
+
+    case "${CONFIG_GLOBAL_TYPE,,}" in
         "rest" )
             transform_var file \
-                                CONFIG_GLOBAL_REST_HOST \
-                                CONFIG_GLOBAL_REST_PASS \
-                                CONFIG_GLOBAL_REST_USER
+                CONFIG_GLOBAL_REST_HOST \
+                CONFIG_GLOBAL_REST_PASS \
+                CONFIG_GLOBAL_REST_USER
 
             config_lines+=(
-                "type       = ${global_type^^}"
+                "type       = $(format_type "${CONFIG_GLOBAL_TYPE}")"
                 "baseUrl    = ${CONFIG_GLOBAL_REST_HOST}"
                 "User       = ${CONFIG_GLOBAL_REST_USER}"
                 "Password   = ${CONFIG_GLOBAL_REST_PASS}"
@@ -363,8 +380,8 @@ llng_configure_instance_global_configuration() {
     case "${CONFIG_GLOBAL_CACHE_TYPE,,}" in
         file )
             create_folder \
-                            "${CONFIG_GLOBAL_CACHE_FILE_PATH}" \
-                            "${NGINX_USER}":"${NGINX_GROUP}" 750
+                "${CONFIG_GLOBAL_CACHE_FILE_PATH}" \
+                "${NGINX_USER}":"${NGINX_GROUP}" 750
             config_lines+=("localStorage        = Cache::FileCache"
                            "localStorageOptions = { \\"
                            "                         'namespace'           => '${CONFIG_GLOBAL_CACHE_FILE_NAMESPACE}', \\"
@@ -373,7 +390,7 @@ llng_configure_instance_global_configuration() {
                            "                         'cache_depth'         => ${CONFIG_GLOBAL_CACHE_FILE_DEPTH}, \\"
                            "                         'default_expires_in'  => ${CONFIG_GLOBAL_CACHE_FILE_EXPIRY}, \\"
                            "                      }"
-                          )
+            )
         ;;
         none )
             :
