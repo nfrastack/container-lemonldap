@@ -174,16 +174,46 @@ llng_configure_handler() {
         var_true "${HANDLER_REDIRECT_ON_ERROR}" && handler_lines+=("useRedirectOnError  = 1")
         var_true "${HANDLER_STATUS}"            && handler_lines+=("status              = 1")
 
-        case "${HANDLER_CACHE_TYPE,,}" in
+        case "${HANDLER_SESSIONS_ACTIVE_TYPE,,}" in
+            "file" )
+                create_folder   \
+                                    "${HANDLER_SESSIONS_ACTIVE_PATH},\
+                                    ${HANDLER_SESSIONS_ACTIVE_PATH}/lock" \
+                                "${NGINX_USER}":"${NGINX_GROUP}" 750
+
+                handler_lines+=("globalStorage               = Apache::Session::File")
+                handler_lines+=("globalStorageOptions        = { \\")
+                handler_lines+=("                                'Directory'      => '${HANDLER_SESSIONS_ACTIVE_PATH}/', \\")
+                handler_lines+=("                                'LockDirectory'  => '${HANDLER_SESSIONS_ACTIVE_PATH}/lock/', \\")
+                handler_lines+=("                              }")
+            ;;
+        esac
+
+        case "${HANDLER_SESSIONS_PERSISTENT_TYPE,,}" in
+            "file" )
+                create_folder   \
+                                    "${HANDLER_SESSIONS_PERSISTENT_PATH},\
+                                    ${HANDLER_SESSIONS_PERSISTENT_PATH}/lock" \
+                                "${NGINX_USER}":"${NGINX_GROUP}" 750
+                handler_lines+=("persistentStorage           = Apache::Session::File")
+                handler_lines+=("persistentStorageOptions    = { \\")
+                handler_lines+=("                                'Directory'      => '${HANDLER_SESSIONS_PERSISTENT_PATH}/', \\")
+                handler_lines+=("                                'LockDirectory'  => '${HANDLER_SESSIONS_PERSISTENT_PATH}/lock/', \\")
+                handler_lines+=("                              }")
+            ;;
+        esac
+
+        case "${HANDLER_SESSIONS_CACHE_TYPE,,}" in
             file )
-                handler_lines+=("localStorage            = Cache::FileCache")
-                handler_lines+=("localStorageOptions     =  { \\")
-                handler_lines+=("                               'namespace'           => '${HANDLER_CACHE_FILE_NAMESPACE}' \\,")
-                handler_lines+=("                               'cache_root'          => '${HANDLER_CACHE_FILE_PATH}'      \\,")
-                handler_lines+=("                               'directory_umask'     => '${HANDLER_CACHE_FILE_DIR_MASK}'  \\,")
-                handler_lines+=("                               'cache_depth'         => ${HANDLER_CACHE_FILE_DEPTH}       \\,")
-                handler_lines+=("                               'default_expires_in'  => ${HANDLER_CACHE_FILE_EXPIRY}      \\,")
-                handler_lines+=("                           }")
+                handler_lines+=("localSessionStorageStorage = Cache::FileCache")
+                handler_lines+=("localSessionStorageOptions =  { \\")
+                handler_lines+=("                                   'namespace'           => '${HANDLER_SESSIONS_CACHE_FILE_NAMESPACE}' \\,")
+                handler_lines+=("                                   'cache_root'          => '${HANDLER_SESSIONS_CACHE_FILE_PATH}'      \\,")
+                handler_lines+=("                                   'directory_umask'     => '${HANDLER_SESSIONS_CACHE_FILE_DIR_MASK}'  \\,")
+                handler_lines+=("                                   'cache_depth'         => ${HANDLER_SESSIONS_CACHE_FILE_DEPTH}       \\,")
+                handler_lines+=("                                   'default_expires_in'  => ${HANDLER_SESSIONS_CACHE_FILE_EXPIRY}      \\,")
+                handler_lines+=("                              }")
+                handler_lines+=(" ")
             ;;
         esac
 
@@ -204,6 +234,50 @@ llng_configure_instance() {
 
     var_true "${CONFIG_USE_SAFE_JAIL}"          && all_lines+=("useSafeJail = 1")
     var_true "${CONFIG_ENABLE_CROSS_DOMAIN}"    && all_lines+=("cda         = 1")
+
+    case "${INSTANCE_SESSIONS_ACTIVE_TYPE,,}" in
+        "file" )
+            create_folder   \
+                                "${INSTANCE_SESSIONS_ACTIVE_PATH},\
+                                ${INSTANCE_SESSIONS_ACTIVE_PATH}/lock" \
+                            "${NGINX_USER}":"${NGINX_GROUP}" 750
+
+            instance_lines+=("globalStorage               = Apache::Session::File")
+            instance_lines+=("globalStorageOptions        = { \\")
+            instance_lines+=("                                'Directory'      => '${INSTANCE_SESSIONS_ACTIVE_PATH}/', \\")
+            instance_lines+=("                                'LockDirectory'  => '${INSTANCE_SESSIONS_ACTIVE_PATH}/lock/', \\")
+            instance_lines+=("                              }")
+        ;;
+    esac
+
+    case "${INSTANCE_SESSIONS_PERSISTENT_TYPE,,}" in
+        "file" )
+            create_folder   \
+                                "${INSTANCE_SESSIONS_PERSISTENT_PATH},\
+                                ${INSTANCE_SESSIONS_PERSISTENT_PATH}/lock" \
+                            "${NGINX_USER}":"${NGINX_GROUP}" 750
+            instance_lines+=("persistentStorage           = Apache::Session::File")
+            instance_lines+=("persistentStorageOptions    = { \\")
+            instance_lines+=("                                'Directory'      => '${INSTANCE_SESSIONS_PERSISTENT_PATH}/', \\")
+            instance_lines+=("                                'LockDirectory'  => '${INSTANCE_SESSIONS_PERSISTENT_PATH}/lock/', \\")
+            instance_lines+=("                              }")
+        ;;
+    esac
+
+    case "${INSTANCE_SESSIONS_CACHE_TYPE,,}" in
+        file )
+            instance_lines+=("localSessionStorageStorage = Cache::FileCache")
+            instance_lines+=("localSessionStorageOptions =  { \\")
+            instance_lines+=("                                   'namespace'           => '${HANDLER_SESSIONS_CACHE_FILE_NAMESPACE}' \\,")
+            instance_lines+=("                                   'cache_root'          => '${HANDLER_SESSIONS_CACHE_FILE_PATH}'      \\,")
+            instance_lines+=("                                   'directory_umask'     => '${HANDLER_SESSIONS_CACHE_FILE_DIR_MASK}'  \\,")
+            instance_lines+=("                                   'cache_depth'         => ${HANDLER_SESSIONS_CACHE_FILE_DEPTH}       \\,")
+            instance_lines+=("                                   'default_expires_in'  => ${HANDLER_SESSIONS_CACHE_FILE_EXPIRY}      \\,")
+            instance_lines+=("                              }")
+            instance_lines+=(" ")
+        ;;
+    esac
+
     config_all=$(printf "%s\n" "${all_lines[@]}")
 }
 
