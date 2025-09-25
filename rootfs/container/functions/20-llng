@@ -48,6 +48,22 @@ llng_bootstrap_global_configuration() {
                 sudo -u "${NGINX_USER}" sed -i \
                                                     -e "s|example.com|${DOMAIN_NAME}|g" \
                                                 "${conf_file}"
+                sudo -u "${NGINX_USER}" jq '
+                        del(
+                        .locationRules["test2.example.com"],
+                        .localSessionStorage,
+                        .localSessionStorageOptions,
+                        .globalStorageOptions.Directory,
+                        .globalStorageOptions.LockDirectory,
+                        .notification,
+                        .notificationStorage,
+                        .notificationStorageOptions,
+                        .persistentStorage,
+                        .persistentStorageOptions,
+                        .exportedHeaders["test2.example.com"],
+                        .applicationList["1sample"].test2
+                        )
+                    ' "${conf_file}"
             fi
 
             local file_count

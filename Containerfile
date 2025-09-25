@@ -95,6 +95,7 @@ RUN echo "" && \
                                 imagemagick \
                                 imagemagick-libs \
                                 imagemagick-perlmagick \
+                                jq \
                                 krb5-libs \
                                 mariadb-client \
                                 openssl \
