@@ -94,7 +94,6 @@ llng_configure_api() {
         nginx_site_enable 04-api
         update_template /etc/nginx/sites.available/04-api.conf \
                                                                 API_HOSTNAME \
-                                                                MANAGER_TEMPLATE_PATH \
                                                                 NGINX_LISTEN_PORT \
                                                                 NGINX_LOG_ACCESS_FORMAT \
                                                                 NGINX_LOG_ACCESS_LOCATION \
@@ -371,7 +370,6 @@ llng_configure_manager() {
         nginx_site_enable 03-manager
         update_template /etc/nginx/sites.available/03-manager.conf \
                                                                     MANAGER_HOSTNAME \
-                                                                    MANAGER_TEMPLATE_PATH \
                                                                     NGINX_LISTEN_PORT \
                                                                     NGINX_LOG_ACCESS_FORMAT \
                                                                     NGINX_LOG_ACCESS_LOCATION \
@@ -383,7 +381,7 @@ llng_configure_manager() {
         llng_override_path "/usr/share/lemonldap-ng/manager/static/css" "${MANAGER_CSS_PATH%/}" "/container/data/llng/assets/manager/static/css" "$NGINX_USER" "${NGINX_GROUP}" 750
         llng_override_path "/usr/share/lemonldap-ng/manager/static/logos" "${MANAGER_LOGOS_PATH%/}" "/container/data/llng/assets/manager/static/logos" "$NGINX_USER" "${NGINX_GROUP}" 750
         llng_override_path "/usr/share/lemonldap-ng/manager/static/languages" "${MANAGER_LANGUAGE_PATH%/}" "/container/data/llng/assets/manager/static/languages" "$NGINX_USER" "${NGINX_GROUP}" 750
-        llng_override_path "/usr/share/lemonldap-ng/manager/templates" "${MANAGER_TEMPLATE_PATH%/}" "/container/data/llng/assets/maanger/templates" "$NGINX_USER" "${NGINX_GROUP}" 750
+        llng_override_path "/usr/share/lemonldap-ng/manager/templates" "${MANAGER_TEMPLATE_PATH%/}" "/container/data/llng/assets/manager/templates" "$NGINX_USER" "${NGINX_GROUP}" 750
 
         local config_lines=(
             "[manager]"
