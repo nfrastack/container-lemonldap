@@ -541,7 +541,7 @@ EOF
         for svar in $(set -o posix; env | grep '^PORTAL_TEMPLATE_.*_STATIC_PATH=.*$' | grep -vE 'BOOTSTRAP|COMMON' | awk -F= '{print $1}'); do
             s_name=$(echo "${svar}" | sed -E 's|^PORTAL_TEMPLATE_(.*)_STATIC_PATH$|\1|' | tr '[:upper:]' '[:lower:]')
             s_path=$(eval echo "\$${svar}")
-            s_dir="${PORTAL_STATIC_PATH%/}${s_name}/"
+            s_dir="${PORTAL_STATIC_PATH%/}/${s_name}/"
 
             if [ -n "${s_name}" ]; then
                 stp_norm=$(realpath "${PORTAL_STATIC_PATH%/}")
