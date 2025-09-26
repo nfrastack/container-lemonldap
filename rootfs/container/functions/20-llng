@@ -761,11 +761,23 @@ llng_configure_webserver() {
                 -e "\#application/zip#a\ \ \ \ application/x-font-ttf           ttf;" \
                 -e "\#application/zip#a\ \ \ \ font/opentype                    ott;" \
             /etc/nginx/mime.types
+
     local comptype="text/plain text/css application/json application/javascript application/x-javascript text/xml application/xml application/rss+xml text/javascript application/vnd.ms-fontobject application/x-font-ttf font/opentype image/jpeg image/png image/svg+xml image/x-icon"
+
     sed -i \
                 -e "s|_types .*;|_types ${comptype};|" \
                 -e "s|_min_length .*;|_min_length 128;|" \
             /etc/nginx/snippets/server.available/compression-*.conf
+
+    sed -i \
+                -e "s|access_log .*;|access_log off;|" \
+                -e "s|error_log .*;|error_log off;|" \
+            /etc/nginx/snippets/server.available/logging.conf
+
+    rm -rf \
+            /etc/logrotate.d/nginx-access \
+            /etc/logrotate.d/nginx-error
+
 }
 
 llng_logtype() {
