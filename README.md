@@ -220,7 +220,7 @@ For usage with `MODE=HANDLER`
 | `HANDLER_LISTEN_SOCKET_TYPE`            | Handler socket type (`tcp`, `path`/`unix` or `both`)                                | `tcp`                                       |         |
 | `HANDLER_LISTEN_SOCKET_PATH`            | Handler Listen UNIX socket path                                                     | `${DEFAULT_SOCKET_PATH}`                    | x       |
 | `HANDLER_LISTEN_SOCKET_TCP_PORT`        | Handler Listen TCP port port                                                        | `${DEFAULT_SOCKET_TCP_PORT}`                | x       |
-| `HANDLER_PROCESSES`                     | Amount of LLNG Handler processes to spawn `auto` for the amount of CPU              | `1`                                         |         |
+| `HANDLER_PROCESSES`                     | Amount of LLNG Handler processes to spawn `auto` for the amount of CPU              | `2`                                         |         |
 | `HANDLER_ENABLE_NGINX`                  | Enable Nginx Proxying support                                                       | `TRUE`                                      |         |
 | `HANDLER_LOG_TYPE`                      | Override Log type (`CONSOLE`, `FILE`, `SYSLOG`)                                     |                                             |         |
 | `HANDLER_LOG_LEVEL`                     | Override Log level (`warn`, `notice`, `info`, `error`, `debug`)                     |                                             |         |
