@@ -1,4 +1,3 @@
-name: "PUSH - Build on repository Push"
 on:
   push:
     paths:
@@ -17,18 +16,17 @@ jobs:
     strategy:
       matrix:
         include:
-          - distro: alpine
-            distro_variant: 3.22
-            latest: true
-    uses: nfrastack/gha/.github/workflows/container-build_and_push.yml@main
+          - { distro: "alpine", distro_variant: "3.22", latest: "true", arch: "linux/amd64,linux/arm64" }
+    uses: nfrastack/gha/.github/workflows/container-build_generic.yml@main
     with:
-      platforms: linux/amd64, linux/arm64
-      base_image: ghcr.io/nfrastack/container-nginx
+      base_image: "ghcr.io/nfrastack/container-nginx"
+      tag: ${{ matrix.tag || '' }}
       distro: ${{ matrix.distro }}
       distro_variant: ${{ matrix.distro_variant }}
-      include_distro_tag: false
-      include_variant_tag: false
+      image_variant: ${{ matrix.image_variant || '' }}
       latest: ${{ matrix.latest }}
+      distro_latest: ${{ matrix.distro_latest }}
+      platforms: ${{ matrix.arch }}
     secrets: inherit
   cleanup:
     needs: [ build ]

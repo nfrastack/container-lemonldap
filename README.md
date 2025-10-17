@@ -80,7 +80,7 @@ Example:
 `ghcr.io/nfrastack/container-lemonldap:1.0` or
 
 * `latest` will be the most recent commit
-* An otpional `tag` may exist that matches the [CHANGELOG](CHANGELOG.md) - These are the safest
+* An optional `tag` may exist that matches the [CHANGELOG](CHANGELOG.md) - These are the safest
 * If there are multiple distribution variations it may include a version - see the registry for availability
 
 Have a look at the container registries and see what tags are available.

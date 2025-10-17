@@ -2,11 +2,10 @@
 #
 # SPDX-License-Identifier: MIT
 
-ARG BASE_IMAGE
-ARG DISTRO
-ARG DISTRO_VARIANT
+ARG \
+    BASE_IMAGE
 
-FROM ${BASE_IMAGE}:${DISTRO}_${DISTRO_VARIANT}
+FROM ${BASE_IMAGE}
 
 LABEL \
         org.opencontainers.image.title="LemonLDAP:NG" \
@@ -19,7 +18,7 @@ LABEL \
         org.opencontainers.image.licenses="MIT"
 
 ARG \
-    LEMONLDAP_VERSION="2.21.3" \
+    LEMONLDAP_VERSION="2.22.0" \
     AUTHCAS_VERSION="1.7" \
     LASSO_VERSION="v2.9.0" \
     LLNG_SESSION_BROWSEABLE_VERSION="v1.3.17" \

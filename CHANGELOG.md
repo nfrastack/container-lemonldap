@@ -1,10 +1,12 @@
 ## 3.0.0beta 2025-09-12++ <code at nfrastack dot com>
 
     ### Added
+       - LemonLDAP:NG 2.22.0
        - Switched to nfastrack/nginx base image
        - Refactored image
        - Switch to CSSO for minification on build
        - Revamped Environment Variables
+       - Revamped Paths
 
 ## 2.0.84 2025-09-12 <dave at tiredofit dot ca>
 
