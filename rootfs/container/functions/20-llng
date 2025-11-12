@@ -130,7 +130,7 @@ llng_configure_fail2ban() {
                         "${NGINX_LOG_ERROR_LOCATION}" \
                         "${NGINX_USER}":"${NGINX_GROUP}" 755
         sudo -u "${NGINX_USER}" touch "${NGINX_LOG_ERROR_LOCATION}"/error-handler.log
-        cat <<EOF | silent tee "${FAIL2BAN_CONFIG_PATH}"/jail.d/llng.conf
+        cat <<EOF | silent tee "${FAIL2BAN_CONFIG_PATH%/}"/jail.d/llng.conf
 [llng]
 enabled  = true
 backend  = auto
@@ -852,7 +852,7 @@ llng_translate_logLevel() {
 
 llng_write_instance_config() {
     if [ "${SETUP_TYPE,,}" = "auto" ] ; then
-        cat <<EOF | silent sudo -u llng tee "${CONFIG_INSTANCE_PATH}"/"${CONFIG_INSTANCE_FILE}"
+        cat <<EOF | silent sudo -u llng tee "${CONFIG_INSTANCE_PATH%/}"/"${CONFIG_INSTANCE_FILE}"
 ; Custom Generated LemonLDAP:NG Config Overrides - Do not edit, instead set ENV Vars
 ; If you do want to edit this file and add your own custom, set the environment variable 'SETUP_TYPE=MANUAL' for next restart of container.
 ; Last Generated on $(TZ=${TIMEZONE} date +'%Y-%m-%d %H:%M:%S %Z')
