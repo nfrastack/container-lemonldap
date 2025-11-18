@@ -2,7 +2,7 @@
 
 ## About
 
-This repository will build a container for [LemonLDAP::NG](https://lemonldap-ng.org/), an authorization anc access manager supporting multiple protocols and standards. (SAML, OpenID Connect, CAS) served by Nginx.
+This repository will build a container for [LemonLDAP::NG](https://lemonldap-ng.org/), an authorization and access manager supporting multiple protocols and standard (SAML, OpenID Connect, CAS) served by Nginx.
 
 * Sane defaults to have a working solution by just running the image
 * Automatically generates configuration files on startup, or option to use your own
