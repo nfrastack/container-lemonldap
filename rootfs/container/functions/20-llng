@@ -45,7 +45,7 @@ llng_bootstrap_global_configuration() {
             if dir_empty "${conf_dir}/" ; then
                 cp -aR /container/data/llng/conf/lmConf-1.json "${conf_dir}/"
                 print_debug "Bootstrapping Initial Configuration"
-                sudo -u "${NGINX_USER}" jq '
+                jq  '
                         del(
                             .applicationList["1sample"].test2
                             .exportedHeaders["test2.example.com"],
@@ -56,9 +56,9 @@ llng_bootstrap_global_configuration() {
                             .locationRules["test2.example.com"],
                             .persistentStorage,
                             .persistentStorageOptions.Directory,
-                            .persistentStorageOptions.LockDirectory,
+                            .persistentStorageOptions.LockDirectory
                         )
-                    ' "${conf_file}"
+                    ' /container/data/llng/conf/lmConf-1.json | silent sudo -u "${NGINX_USER}" tee "${conf_file}"
                 sudo -u "${NGINX_USER}" sed -i \
                                                     -e "s|example.com|${DOMAIN_NAME}|g" \
                                                 "${conf_file}"
@@ -190,7 +190,7 @@ llng_configure_handler() {
             "file" )
                 create_folder   \
                                     "${HANDLER_SESSIONS_ACTIVE_PATH},\
-                                    ${HANDLER_SESSIONS_ACTIVE_PATH}/lock" \
+                                     ${HANDLER_SESSIONS_ACTIVE_PATH}/lock" \
                                 "${NGINX_USER}":"${NGINX_GROUP}" 750
 
                 handler_lines+=(
@@ -207,7 +207,7 @@ llng_configure_handler() {
             "file" )
                 create_folder   \
                                     "${HANDLER_SESSIONS_PERSISTENT_PATH},\
-                                    ${HANDLER_SESSIONS_PERSISTENT_PATH}/lock" \
+                                     ${HANDLER_SESSIONS_PERSISTENT_PATH}/lock" \
                                 "${NGINX_USER}":"${NGINX_GROUP}" 750
                 handler_lines+=(
                                   "persistentStorage           = Apache::Session::File"
@@ -255,8 +255,8 @@ llng_configure_instance() {
     case "${INSTANCE_SESSIONS_ACTIVE_TYPE,,}" in
         "file" )
             create_folder   \
-                                "${INSTANCE_SESSIONS_ACTIVE_PATH},\
-                                ${INSTANCE_SESSIONS_ACTIVE_PATH}/lock" \
+                                "${INSTANCE_SESSIONS_ACTIVE_FILE_PATH},\
+                                 ${INSTANCE_SESSIONS_ACTIVE_FILE_PATH}/lock" \
                             "${NGINX_USER}":"${NGINX_GROUP}" 750
 
             instance_lines+=(
@@ -272,8 +272,8 @@ llng_configure_instance() {
     case "${INSTANCE_SESSIONS_PERSISTENT_TYPE,,}" in
         "file" )
             create_folder   \
-                                "${INSTANCE_SESSIONS_PERSISTENT_PATH},\
-                                ${INSTANCE_SESSIONS_PERSISTENT_PATH}/lock" \
+                                "${INSTANCE_SESSIONS_PERSISTENT_FILE_PATH},\
+                                 ${INSTANCE_SESSIONS_PERSISTENT_FILE_PATH}/lock" \
                             "${NGINX_USER}":"${NGINX_GROUP}" 750
             instance_lines+=(
                               "persistentStorage           = Apache::Session::File"
