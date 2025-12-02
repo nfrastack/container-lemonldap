@@ -741,7 +741,6 @@ llng_configure_test() {
                             TEST_HOSTNAME \
                             TEST_SOCKET
         sanity_var TEST_HOSTNAME "Portal Hostname"
-        llng_bootstrap_configuration test
         llng_configure_socket test
         nginx_site_enable 05-test
         update_template /etc/nginx/sites.available/05-test.conf \
