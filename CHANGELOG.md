@@ -1,4 +1,4 @@
-## 3.0.0beta 2025-09-12++ <code at nfrastack dot com>
+## 3.0.0 2025-12-19 <code at nfrastack dot com>
 
     ### Added
        - LemonLDAP:NG 2.22.1
