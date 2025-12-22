@@ -118,7 +118,7 @@ llng_configure_api() {
         api_allowed=$(echo "${API_ALLOWED_IPS}" | tr "," "\n" | uniq)
         for allowed_host in ${api_allowed}; do
             print_debug "API - Allowing ${allowed_host} to access"
-            sed -i "/allow 127.0.0.1/a\ \ \          allow ${allowed_host};" /etc/nginx/sites.available/04-api.conf
+            sed -i "/allow 127.0.0/a\ \ \       allow ${allowed_host};" /etc/nginx/sites.available/04-api.conf
         done
     fi
 }
@@ -173,7 +173,7 @@ llng_configure_handler() {
 
             handler_allowed=$(echo "${HANDLER_ALLOWED_IPS}" | tr "," "\n" | uniq)
             for allowed_host in $handler_allowed; do
-                sed -i "/allow 127.0.0.1/a\ \ \         allow ${allowed_host};" /etc/nginx/sites.available/01-handler.conf
+                sed -i "/allow 127.0.0/a\ \ \      allow ${allowed_host};" /etc/nginx/sites.available/01-handler.conf
             done
 
             echo "127.0.0.1 ${HANDLER_HOSTNAME}" | silent tee -a /etc/hosts
@@ -525,7 +525,7 @@ EOF
             sed -i "/deny all;/i\ \ \    allow 127.0.0.1;" /etc/nginx/sites.available/02-portal.conf
             allowed_rest_portal=$(echo "${PORTAL_REST_ALLOWED_IPS}" | tr "," "\n" | uniq)
             for allowed_host in $allowed_rest_portal; do
-                sed -i "/allow 127.0.0.1/a\ \ \      allow ${allowed_host};" /etc/nginx/sites.available/02-portal.conf
+                sed -i "/allow 127.0.0.1/a\ \ \   allow ${allowed_host};" /etc/nginx/sites.available/02-portal.conf
             done
 
             portal_rest_users=$(printenv | sort | grep -c '^PORTAL_REST_USER.*')
@@ -556,11 +556,21 @@ EOF
             fi
         fi
 
+
         llng_override_path "/usr/share/lemonldap-ng/portal/static/common/icons" "${PORTAL_ICONS_PATH%/}" "/container/data/llng/assets/portal/static/common/icons" "${NGINX_USER}" "${NGINX_GROUP}" 750
         llng_override_path "/usr/share/lemonldap-ng/portal/static/common/apps" "${PORTAL_APPS_PATH%/}" "/container/data/llng/assets/portal/static/common/apps" "${NGINX_USER}" "${NGINX_GROUP}" 750
         llng_override_path "/usr/share/lemonldap-ng/portal/static/common/logos" "${PORTAL_LOGOS_PATH%/}" "/container/data/llng/assets/portal/static/common/logos" "${NGINX_USER}" "${NGINX_GROUP}" 750
         llng_override_path "/usr/share/lemonldap-ng/portal/static/languages" "${PORTAL_LANGUAGE_PATH%/}" "/container/data/llng/assets/portal/static/languages" "${NGINX_USER}" "${NGINX_GROUP}" 750
         llng_override_path "/usr/share/lemonldap-ng/portal/templates" "${PORTAL_TEMPLATES_PATH%/}" "/container/data/llng/assets/portal/templates" "${NGINX_USER}" "${NGINX_GROUP}" 750
+
+        ## WIP PORTAL_LANGUAGE_*_FILE overrides
+        for lang_env in $(env | grep -E '^PORTAL_LANGUAGE_[A-Z0-9]+_FILE=' | awk -F= '{print $1}'); do
+            type_code="${env_var#PORTAL_LANGUAGE_}"
+            type_code="${type_code%_FILE}"
+            file_name="${type_code,,}.json"
+            file_path="${PORTAL_LANGUAGE_PATH%/}/$file_name"
+            llng_override_file "${lang_env}" "${PORTAL_LANGUAGE_PATH%/}" "${NGINX_USER}" "${NGINX_GROUP}" 750
+        done
 
         for tvar in $(set -o posix; env | grep '^PORTAL_TEMPLATE_.*_PATH=.*$' | grep -vE 'BOOTSTRAP|COMMON|_STATIC_PATH=' | awk -F= '{print $1}'); do
             t_name=$(echo "${tvar}" | sed -E 's|^PORTAL_TEMPLATE_(.*)_PATH$|\1|' | tr '[:upper:]' '[:lower:]')
@@ -611,6 +621,7 @@ EOF
                 fi
             fi
         done
+
 
         if var_true "${PORTAL_ENABLE_CAPTCHA}" ; then
             create_folder   \
@@ -785,6 +796,48 @@ llng_logtype() {
         "console" | * )     echo "Lemonldap::NG::Common::Logger::Std" ;;
     esac
 }
+
+llng_override_file() {
+    local file_env="$1"         # e.g. PORTAL_LANGUAGE_EN_FILE
+    local path_default="$2"    # e.g. $PORTAL_LANGUAGE_PATH
+    local u="$3"               # e.g. $NGINX_USER
+    local g="$4"               # e.g. $NGINX_GROUP
+    local p="$5"               # e.g. 750
+
+    local path_env="${!file_env}"
+    if [ -z "$path_env" ]; then
+        print_debug "[override_file] No env var set for $file_env, skipping."
+        return 0
+    fi
+
+    local file_name
+    file_name="$(basename "$path_env")"
+    local file_default="${path_default%/}/${file_name}"
+
+    create_folder "$path_default" "${u}:${g}" "${p}"
+
+    if [ -e "$path_env" ]; then
+        # If file exists at env var location, replace in path_default with symlink
+        if [ -e "${file_default}" ]; then
+            rm -f "${file_default}"
+        fi
+        ln -s "$path_env" "${file_default}"
+        chown -h "${u}:${g}" "${file_default}"
+        print_notice "[override_file] Linked ${file_default} to ${path_env}"
+    else
+        # If file does not exist at env var location, but exists in path_default, copy it
+        if [ -e "${file_default}" ]; then
+            cp "${file_default}" "${path_env}"
+            rm -f "${file_default}"
+            ln -s "${path_env}" "${file_default}"
+            chown -h "${u}:${g}" "${file_default}"
+            print_notice "[override_file] Copied ${file_default} to ${path_env} and linked"
+        else
+            print_warn "[override_file] Neither ${path_env} nor ${file_default} exist, nothing to link."
+        fi
+    fi
+}
+
 
 llng_override_path() {
     local path_default="$1"

@@ -1,3 +1,13 @@
+## 3.0.1pre 2025-12-22 <code at nfrastack dot com>
+
+    ### Added
+       - PORTAL_LANGUAGE_<LANGUAGE>_FILE override capabilities (wip)
+       - Switch to Alpine 3.23
+
+    ### Fixed
+       - *_ALLOWED_IPS functionality fixed
+       - Build log not properly tracking source for module
+
 ## 3.0.0 2025-12-19 <code at nfrastack dot com>
 
     ### Added

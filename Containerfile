@@ -263,7 +263,7 @@ RUN echo "" && \
     ./Build && \
     ./Build test && \
     ./Build install && \
-    container_build_log add "LLNG Session Browseable module" "${LLNG_SESSION_BROWSEABLE_VERSION}" "${LLNG_SESSION_BROESEABLE_REPO_URL}" && \
+    container_build_log add "LLNG Session Browseable module" "${LLNG_SESSION_BROWSEABLE_VERSION}" "${LLNG_SESSION_BROWSEABLE_REPO_URL}" && \
     \
     if [ "${LEMONLDAP_VERSION}" != "master" ] ; then LEMONLDAP_VERSION=v$LEMONLDAP_VERSION ; fi && \
     ## Changelog !!
