@@ -298,6 +298,7 @@ For usage with `MODE=PORTAL`
 | `PORTAL_APPS_PATH`                           | Portal App Icons path                                                       | `/usr/share/lemonldap-ng/portal/static/common/apps`      |         |
 | `PORTAL_LOGOS_PATH`                          | Portal Logos path                                                           | `/usr/share/lemonldap-ng/portal/static/common/logos`     |         |
 | `PORTAL_LANGUAGE_PATH`                       | Portal Language path                                                        | `/usr/share/lemonldap-ng/portal/static/languages`        |         |
+| `PORTAL_LANGUAGE_<LANG>_FILE`                | Path to individual language file for override                               |                                                          |         |
 | `PORTAL_TEMPLATES_PATH`                      | Portal Templates path                                                       | `/usr/share/lemonldap-ng/portal/templates`               |         |
 | `PORTAL_STATIC_PATH`                         | Portal static path                                                          | `/usr/share/lemonldap-ng/portal/static`                  |         |
 | `PORTAL_STATIC_PREFIX`                       | Portal static prefix                                                        | `/static`                                                |         |
@@ -322,8 +323,8 @@ For usage with `MODE=PORTAL`
 | `PORTAL_GEOIP_PATH`                          | Path for GeoIP Database if used                                             |                                                          |         |
 | `PORTAL_SKIN`                                | Override Portal Skin Name                                                   |                                                          |         |
 | `PORTAL_NOTIFICATIONS_TYPE`                  | Portal notifications type                                                   | `FILE`                                                   |         |
-| `PORTAL_NOTIFICATIONS_FILE_PATH`        | Portal notifications file path                                              | `${DATA_PATH}/notifications`                             |         |
-| `PORTAL_NOTIFICATIONS_FILE_SEPERATOR`   | Portal notifications file separator                                         | `_`                                                      |         |
+| `PORTAL_NOTIFICATIONS_FILE_PATH`             | Portal notifications file path                                              | `${DATA_PATH}/notifications`                             |         |
+| `PORTAL_NOTIFICATIONS_FILE_SEPERATOR`        | Portal notifications file separator                                         | `_`                                                      |         |
 | `PORTAL_NOTIFICATIONS_ENABLE_EXPLORER`       | Enable notifications explorer                                               | `TRUE`                                                   |         |
 | `PORTAL_NOTIFICATIONS_ENABLE_PUBLIC`         | Enable public notifications                                                 | `TRUE`                                                   |         |
 | `PORTAL_NOTIFICATIONS_EXPLORER_MAX_RETRIEVE` | Max notifications to retrieve                                               | `3`                                                      |         |
