@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: © 2025 Nfrastack <code@nfrastack.com>
+# SPDX-FileCopyrightText: © 2026 Nfrastack <code@nfrastack.com>
 #
 # SPDX-License-Identifier: MIT
 
@@ -18,7 +18,7 @@ LABEL \
         org.opencontainers.image.licenses="MIT"
 
 ARG \
-    LEMONLDAP_VERSION="2.22.1" \
+    LEMONLDAP_VERSION="2.22.2" \
     AUTHCAS_VERSION="1.7" \
     LASSO_VERSION="v2.9.0" \
     LLNG_SESSION_BROWSEABLE_VERSION="v1.3.18" \

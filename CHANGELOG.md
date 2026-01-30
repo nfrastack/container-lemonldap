@@ -3,6 +3,7 @@
     ### Added
        - PORTAL_LANGUAGE_<LANGUAGE>_FILE override capabilities (wip)
        - Switch to Alpine 3.23
+       - LemonLDAP 2.22.2
 
     ### Fixed
        - *_ALLOWED_IPS functionality fixed
