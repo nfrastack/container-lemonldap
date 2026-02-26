@@ -36,23 +36,30 @@ COPY LICENSE /usr/src/container/LICENSE
 COPY README.md /usr/src/container/README.md
 
 ENV \
-    NGINX_APPLICATION_CONFIGURATION=FALSE \
-    NGINX_LOG_ACCESS_FORMAT=llng_standard \
-    NGINX_ENABLE_CREATE_SAMPLE_HTML=FALSE \
-    NGINX_USER=llng \
-    NGINX_GROUP=llng \
-    NGINX_LOG_ACCESS_LOCATION=/logs/nginx/ \
-    NGINX_LOG_ACCESS_FILE=access.log \
-    NGINX_LOG_BLOCKED_LOCATION=/logs/nginx/ \
-    NGINX_LOG_ERROR_FILE=error.log \
-    NGINX_LOG_ERROR_LOCATION=/logs/nginx/ \
-    NGINX_SITE_ENABLED=null \
-    NGINX_WORKER_PROCESSES=1 \
+    LLNG_USER=llng \
+    LLNG_GROUP=llng \
     PATH=/usr/share/lemonldap-ng/bin:${PATH} \
     IMAGE_NAME="nfrastack/lemonldap" \
     IMAGE_REPO_URL="https://github.com/nfrastack/container-lemonldap/"
 
 RUN echo "" && \
+    BUILD_ENV=" \
+                10-nginx/NGINX_APPLICATION_CONFIGURATION=FALSE \
+                10-nginx/NGINX_LOG_ACCESS_FORMAT=llng_standard \
+                10-nginx/NGINX_CREATE_SAMPLE_HTML=FALSE \
+                10-nginx/ENABLE_FASTCGI_PARAMS=TRUE \
+                10-nginx/NGINX_USER=[env:LLNG_USER] \
+                10-nginx/NGINX_GROUP=[env:LLNG_GROUP] \
+                10-nginx/NGINX_SITE_API_SERVER_NAME=[env:API_HOSTNAME] \
+                10-nginx/NGINX_SITE_API_WEBROOT=/usr/share/lemonldap-ng/manager/ \
+                10-nginx/NGINX_SITE_HANDLER_SERVER_NAME=[env:HANDLER_HOSTNAME] \
+                10-nginx/NGINX_SITE_MANAGER_SERVER_NAME=[env:MANAGER_HOSTNAME] \
+                10-nginx/NGINX_SITE_MANAGER_WEBROOT=/usr/share/lemonldap-ng/manager/ \
+                10-nginx/NGINX_SITE_PORTAL_SERVER_NAME=[env:PORTAL_HOSTNAME] \
+                10-nginx/NGINX_SITE_PORTAL_WEBROOT=/usr/share/lemonldap-ng/portal/ \
+                10-nginx/NGINX_SITE_TEST_SERVER_NAME=[env:TEST_HOSTNAME] \
+              " \
+              && \
     LLNG_BUILD_DEPS_ALPINE=" \
                                 autoconf \
                                 automake \
@@ -159,14 +166,14 @@ RUN echo "" && \
                                 perl-xml-sax \
                                 postgresql-client \
                                 rsyslog \
-                                s6 \
+                                #s6 \
                                 xmlsec \
                                 xmlsec-dev \
                             " \
                             && \
     source /container/base/functions/container/build && \
     container_build_log image && \
-    create_user ${NGINX_USER} 2884 ${NGINX_GROUP} 2884 /data && \
+    create_user llng 2884 llng 2884 /data && \
     package update && \
     package upgrade && \
     package install \
@@ -290,8 +297,8 @@ RUN echo "" && \
             EXAMPLESDIR=/usr/src/llng/examples \
             CONFDIR=/etc/lemonldap-ng \
             CRONDIR=/usr/src/llng/cron.d \
-            APACHEUSER=${NGINX_USER} \
-            APACHEGROUP=${NGINX_GROUP} \
+            APACHEUSER=${LLNG_USER} \
+            APACHEGROUP=${LLNG_GROUP} \
             FASTCGISOCKDIR=/var/run/llng-fastcgi-server \
             WITHRC=no \
             WITHSYSTEMD=no \
@@ -324,9 +331,9 @@ RUN echo "" && \
     \
     mkdir -p /container/data/llng/htdocs && \
     mkdir -p /var/run/llng-fastcgi-server && \
-    chown -R "${NGINX_USER}":"${NGINX_GROUP}" \
-                    /container/data/llng \
-                    /var/run/llng-fastcgi-server && \
+    chown -R "${LLNG_USER}":"${LLNG_GROUP}" \
+                                            /container/data/llng \
+                                            /var/run/llng-fastcgi-server && \
     ln -s /usr/share/lemonldap-ng/doc /usr/share/lemonldap-ng/manager/doc && \
     ln -s /usr/share/lemonldap-ng/portal /usr/share/lemonldap-ng/portal/htdocs && \
     container_build_log add "LemonLDAP:NG" "${LEMONLDAP_VERSION}" "${LEMONLDAP_REPO_URL}" && \

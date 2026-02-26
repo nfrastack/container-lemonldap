@@ -1,6 +1,7 @@
-## 3.0.1pre 2025-12-22 <code at nfrastack dot com>
+## 3.1.0pre 2025-12-22 <code at nfrastack dot com>
 
     ### Added
+       - Convert to nfrastack/container-nginx:8.x.x format
        - PORTAL_LANGUAGE_<LANGUAGE>_FILE override capabilities (wip)
        - Switch to Alpine 3.23
        - LemonLDAP 2.22.2

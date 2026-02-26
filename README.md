@@ -139,6 +139,8 @@ By Default this image is ready to run out of the box, without having to alter an
 |               | Options: `API` `HANDLER` `HANDLER` `MANAGER` `TEST`                                      |          |         |
 | `DATA_PATH`   | Data path                                                                                | `/data/` |         |
 | `DOMAIN_NAME` | Your domain name eg `example.com`                                                        |          | x       |
+| `LLNG_USER`   | User to run operations as                                                                | `llng`   |         |
+| `LLNG_GROUP`  | Group for `LLNG_USER`                                                                    | `llng`   |         |
 
 #### Configuration Variables
 

@@ -1,5 +1,5 @@
 #!/command/with-contenv bash
-# SPDX-FileCopyrightText: © 2025 Nfrastack <code@nfrastack.com>
+# SPDX-FileCopyrightText: © 2026 Nfrastack <code@nfrastack.com>
 #
 # SPDX-License-Identifier: MIT
 
@@ -8,7 +8,6 @@ prepare_service 10-nginx
 prepare_service 20-llng
 SERVICE_NAME="lemonldap-ng"
 
-llng_setup_container_mode
 llng_bootstrap_filesystem
 llng_configure_instance
 llng_configure_instance_global_configuration
@@ -20,8 +19,8 @@ llng_configure_test
 llng_configure_fail2ban
 llng_configure_webserver
 llng_write_instance_config
-chown -R "${NGINX_USER}":"${NGINX_GROUP}" "${DATA_PATH}"
-create_zabbix llng
-custom_files "${CONTAINER_CUSTOM_PATH}" "/usr/share/lemonldap-ng/" "${NGINX_USER}" "${NGINX_GROUP}"
+chown -R "${LLNG_USER}":"${LLNG_GROUP}" "${DATA_PATH}"
+call create_zabbix llng
+custom_files "${CONTAINER_CUSTOM_PATH}" "/usr/share/lemonldap-ng/" "${LLNG_USER}" "${LLNG_GROUP}"
 
 liftoff
