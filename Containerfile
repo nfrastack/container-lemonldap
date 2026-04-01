@@ -44,6 +44,7 @@ ENV \
 
 RUN echo "" && \
     BUILD_ENV=" \
+                10-nginx/ENABLE_NGINX=FALSE \
                 10-nginx/NGINX_APPLICATION_CONFIGURATION=FALSE \
                 10-nginx/NGINX_LOG_ACCESS_FORMAT=llng_standard \
                 10-nginx/NGINX_CREATE_SAMPLE_HTML=FALSE \
@@ -57,6 +58,8 @@ RUN echo "" && \
                 10-nginx/NGINX_SITE_MANAGER_WEBROOT=/usr/share/lemonldap-ng/manager/ \
                 10-nginx/NGINX_SITE_PORTAL_SERVER_NAME=[env:PORTAL_HOSTNAME] \
                 10-nginx/NGINX_SITE_PORTAL_WEBROOT=/usr/share/lemonldap-ng/portal/ \
+                10-nginx/NGINX_SITE_IMPERSONATE_WEBROOT=/usr/share/lemonldap-ng/portal/ \
+                10-nginx/NGINX_SITE_IMPERSONATE_SERVER_NAME=[env:IMPERSONATE_HOSTNAME] \
                 10-nginx/NGINX_SITE_TEST_SERVER_NAME=[env:TEST_HOSTNAME] \
               " \
               && \
@@ -166,7 +169,6 @@ RUN echo "" && \
                                 perl-xml-sax \
                                 postgresql-client \
                                 rsyslog \
-                                #s6 \
                                 xmlsec \
                                 xmlsec-dev \
                             " \

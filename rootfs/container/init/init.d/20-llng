@@ -19,6 +19,7 @@ llng_configure_test
 llng_configure_fail2ban
 llng_configure_webserver
 llng_write_instance_config
+
 chown -R "${LLNG_USER}":"${LLNG_GROUP}" "${DATA_PATH}"
 call create_zabbix llng
 custom_files "${CONTAINER_CUSTOM_PATH}" "/usr/share/lemonldap-ng/" "${LLNG_USER}" "${LLNG_GROUP}"

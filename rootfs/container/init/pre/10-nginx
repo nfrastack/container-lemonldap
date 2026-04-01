@@ -5,51 +5,52 @@
 
 source /container/base/functions/container/init
 prepare_service 10-nginx
-prepare_service 20-llng
+source /container/defaults/20-llng
+
 SERVICE_NAME="lemonldap-ng"
 
 transform_var file MODE
-if [ "${MODE,,}" = "all" ]; then
-    print_debug "Container Mode: ALL - Enabling all modes and generating environment variables for each mode"
-    transform_var file \
-                        ENABLE_API \
-                        ENABLE_HANDLER \
-                        ENABLE_MANAGER \
-                        ENABLE_PORTAL \
-                        ENABLE_TEST
 
-    _container_build_env " \
-                            20-llng/ENABLE_API=${ENABLE_API:-"TRUE"} \
-                            20-llng/ENABLE_HANDLER=${ENABLE_HANDLER:-"TRUE"} \
-                            20-llng/ENABLE_MANAGER=${ENABLE_MANAGER:-"TRUE"} \
-                            20-llng/ENABLE_PORTAL=${ENABLE_PORTAL:-"TRUE"} \
-                            20-llng/ENABLE_TEST=${ENABLE_TEST:-"TRUE"} \
-                            10-nginx/NGINX_ENABLE_APPLICATION_CONFIGURATION=TRUE \
-                            10-nginx/NGINX_SITE_ENABLED=api,handler,manager,portal,test \
-                         "
-    ENABLE_API=${ENABLE_API:-"TRUE"}
-    ENABLE_HANDLER=${ENABLE_HANDLER:-"TRUE"}
-    ENABLE_MANAGER=${ENABLE_MANAGER:-"TRUE"}
-    ENABLE_PORTAL=${ENABLE_PORTAL:-"TRUE"}
-    ENABLE_TEST=${ENABLE_TEST:-"TRUE"}
-else
-    modes=$(echo "${MODE,,}" | tr "," "\n")
-    for mode in $modes; do
-        case "${mode,,}" in
-            "api" | "handler" | "manager" | "portal" | "test")
-                print_debug "Enabling Container Mode for: ${mode^}"
-                set -x
-                _container_build_env "10-nginx/NGINX_ENABLE_APPLICATION_CONFIGURATION=TRUE"
-                _container_build_env "20-llng/ENABLE_${mode^^}=TRUE"
-                _container_build_env "10-nginx/NGINX_SITE_ENABLED=\${NGINX_SITE_ENABLED},${mode,,}"
-                set +x
-            ;;
-            *)
-                print_error "Unknown 'MODE' environment variable - exitting.."
-                exit 1
-            ;;
-        esac
-    done
+if [ "${MODE,,}" = "all" ]; then
+    export MODE="api,handler,manager,portal,test"
 fi
+
+for mode in $(echo "${MODE,,}" | tr "," "\n"); do
+    case "${mode,,}" in
+        "api" | "manager" | "portal" | "test")
+            print_info "Enabling Container Mode for: ${mode^}"
+            _container_build_env "10-nginx/ENABLE_NGINX=TRUE"
+            _container_build_env "10-nginx/NGINX_ENABLE_APPLICATION_CONFIGURATION=TRUE"
+            _container_build_env "20-llng/ENABLE_${mode^^}=TRUE"
+
+            transform_var file ${mode^^}_HOSTNAME
+            if [ ! -v  ${mode^^}_HOSTNAME ] ; then
+                print_error "${mode^^}_HOSTNAME is not set"
+                exit 1
+            fi
+            NGINX_SITE_ENABLED+=",${mode,,}"
+        ;;
+        "handler" )
+            print_info "Enabling Container Mode for: ${mode^}"
+            _container_build_env "20-llng/ENABLE_${mode^^}=TRUE"
+            if var_true "${HANDLER_ENABLE_NGINX}" ; then
+                _container_build_env "10-nginx/ENABLE_NGINX=TRUE"
+                _container_build_env "10-nginx/NGINX_ENABLE_APPLICATION_CONFIGURATION=TRUE"
+
+                if [ ! -v  ${mode^^}_HOSTNAME ] ; then
+                    print_error "${mode^^}_HOSTNAME is not set! Needs to be set if HANDLER_ENABLE_NGINX=TRUE"
+                    exit 1
+                fi
+                NGINX_SITE_ENABLED+=",${mode}"
+            fi
+        ;;
+        *)
+            print_error "Unknown 'MODE' environment variable - exitting.."
+            exit 1
+        ;;
+    esac
+done
+NGINX_SITE_ENABLED="${NGINX_SITE_ENABLED#,}"
+_container_build_env "10-nginx/NGINX_SITE_ENABLED=${NGINX_SITE_ENABLED}"
 
 liftoff

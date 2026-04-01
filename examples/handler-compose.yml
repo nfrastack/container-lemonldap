@@ -12,6 +12,7 @@ services:
     - MODE=HANDLER
 
     - DOMAIN_NAME=example.com
+    - HANDLER_ENABLE_NGINX=TRUE
     - HANDLER_HOSTNAME=handler.sso.example.com
     - HANDLER_ALLOWED_IPS=172.16.1.0/24,192.168.0.1,10.0.0.0/12
 

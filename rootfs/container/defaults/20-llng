@@ -76,6 +76,7 @@ MANAGER_VIEWER_ALLOW_DIFF=${MANAGER_VIEWER_ALLOW_DIFF:-"0"}
 MANAGER_VIEWER_HIDDEN_KEYS=${MANAGER_VIEWER_HIDDEN_KEYS:-"samlIDPMetaDataNodes samlSPMetaDataNodes managerPassword ManagerDn globalStorageOptions persistentStorageOptions"} ## TODO
 MODE=${MODE:-"api,handler,manager,portal,test"}
 PORTAL_APPS_PATH=${PORTAL_APPS_PATH:-"/usr/share/lemonldap-ng/portal/static/common/apps"}
+PORTAL_BACKGROUNDS_PATH=${PORTAL_BACKGROUNDS_PATH:-"/usr/share/lemonldap-ng/portal/static/common/backgrounds"}
 PORTAL_CAPTCHA_PATH=${PORTAL_CAPTCHA_PATH:-"${DATA_PATH}/captcha"}
 PORTAL_ENABLE_GITLAB_OAUTH=${PORTAL_ENABLE_GITLAB_OAUTH:-"FALSE"}
 PORTAL_ENABLE_REST=${PORTAL_ENABLE_REST:-"FALSE"}

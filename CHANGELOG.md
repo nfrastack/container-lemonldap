@@ -1,14 +1,19 @@
-## 3.1.0pre 2025-12-22 <code at nfrastack dot com>
+## 3.1.0 2026-04-01 <code at nfastack dot com>
 
-    ### Added
-       - Convert to nfrastack/container-nginx:8.x.x format
-       - PORTAL_LANGUAGE_<LANGUAGE>_FILE override capabilities (wip)
-       - Switch to Alpine 3.23
-       - LemonLDAP 2.22.2
+Note that your nginx log file names have changed from (access|error)-<site>.log to <site>-(access|error).log due to upstream base image changes
 
-    ### Fixed
-       - *_ALLOWED_IPS functionality fixed
-       - Build log not properly tracking source for module
+   ### Added
+      - Convert to nfrastack/container-nginx:8.x.x format
+      - PORTAL_LANGUAGE_<LANGUAGE>_FILE override capabilities
+      - Switch to Alpine 3.23
+      - LemonLDAP 2.22.2
+      - Environment variable PORTAL_BACKGROUNDS_PATH introduced to allow for custom backgrounds
+
+   ### Changed
+      - Nginx Log Files naming have changed
+      - *_ALLOWED_IPS functionality fixed
+      - Build log not properly tracking source for module
+
 
 ## 3.0.0 2025-12-19 <code at nfrastack dot com>
 

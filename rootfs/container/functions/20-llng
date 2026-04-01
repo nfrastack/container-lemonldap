@@ -101,8 +101,7 @@ llng_configure_api() {
                             API_ALLOWED_IPS \
                             API_HOSTNAME \
                             API_SOCKET
-        sanity_var API_HOSTNAME "API Hostname"
-        nginx_site_enable api
+
         llng_bootstrap_global_configuration api
         llng_configure_socket api
         api_allowed=$(echo "${API_ALLOWED_IPS}" | tr "," "\n" | uniq)
@@ -142,7 +141,6 @@ llng_configure_handler() {
                             HANDLER_LISTEN_SOCKET_TCP_PORT \
                             HANDLER_LISTEN_SOCKET_PATH \
                             HANDLER_SOCKET
-        nginx_site_enable handler
         llng_configure_socket handler
         if var_true "${HANDLER_ENABLE_NGINX}" ; then
             sanity_var HANDLER_HOSTNAME "Handler Hostname"
@@ -407,7 +405,6 @@ llng_configure_manager() {
                             MANAGER_VIEWER_ALLOW_BROWSE \
                             MANAGER_VIEWER_ALLOW_DIFF
         sanity_var MANAGER_HOSTNAME "Manager Hostname"
-        nginx_site_enable manager
 
         llng_bootstrap_global_configuration manager
         llng_configure_socket manager
@@ -452,8 +449,6 @@ llng_configure_portal() {
                             PORTAL_ENABLE_REST \
                             PORTAL_REST_ALLOWED_IPS \
                             PORTAL_REST_AUTH_FILE
-        sanity_var PORTAL_HOSTNAME "Portal Hostname"
-        nginx_site_enable portal
         llng_bootstrap_global_configuration portal
         llng_configure_socket portal
 
@@ -510,11 +505,11 @@ llng_configure_portal() {
 
         llng_override_path "/usr/share/lemonldap-ng/portal/static/common/icons" "${PORTAL_ICONS_PATH%/}" "/container/data/llng/assets/portal/static/common/icons" "${LLNG_USER}" "${LLNG_GROUP}" 750
         llng_override_path "/usr/share/lemonldap-ng/portal/static/common/apps" "${PORTAL_APPS_PATH%/}" "/container/data/llng/assets/portal/static/common/apps" "${LLNG_USER}" "${LLNG_GROUP}" 750
+        llng_override_path "/usr/share/lemonldap-ng/portal/static/common/backgrounds" "${PORTAL_BACKGROUNDS_PATH%/}" "/container/data/llng/assets/portal/static/common/backgrounds" "${LLNG_USER}" "${LLNG_GROUP}" 750
         llng_override_path "/usr/share/lemonldap-ng/portal/static/common/logos" "${PORTAL_LOGOS_PATH%/}" "/container/data/llng/assets/portal/static/common/logos" "${LLNG_USER}" "${LLNG_GROUP}" 750
         llng_override_path "/usr/share/lemonldap-ng/portal/static/languages" "${PORTAL_LANGUAGE_PATH%/}" "/container/data/llng/assets/portal/static/languages" "${LLNG_USER}" "${LLNG_GROUP}" 750
         llng_override_path "/usr/share/lemonldap-ng/portal/templates" "${PORTAL_TEMPLATES_PATH%/}" "/container/data/llng/assets/portal/templates" "${LLNG_USER}" "${LLNG_GROUP}" 750
 
-        ## WIP PORTAL_LANGUAGE_*_FILE overrides
         for lang_env in $(env | grep -E '^PORTAL_LANGUAGE_[A-Z0-9]+_FILE=' | awk -F= '{print $1}'); do
             type_code="${env_var#PORTAL_LANGUAGE_}"
             type_code="${type_code%_FILE}"
@@ -732,8 +727,6 @@ llng_configure_test() {
         transform_var file \
                             TEST_HOSTNAME \
                             TEST_SOCKET
-        sanity_var TEST_HOSTNAME "Test Hostname"
-        nginx_site_enable test
         llng_configure_socket test
     fi
 }
@@ -770,11 +763,11 @@ llng_logtype() {
 }
 
 llng_override_file() {
-    local file_env="$1"        # e.g. PORTAL_LANGUAGE_EN_FILE
-    local path_default="$2"    # e.g. $PORTAL_LANGUAGE_PATH
-    local u="$3"               # e.g. $LLNG_USER
-    local g="$4"               # e.g. $LLNG_GROUP
-    local p="$5"               # e.g. 750
+    local file_env="$1"        # PORTAL_LANGUAGE_EN_FILE
+    local path_default="$2"    # $PORTAL_LANGUAGE_PATH
+    local u="$3"               # $LLNG_USER
+    local g="$4"               # $LLNG_GROUP
+    local p="$5"               # 750
 
     local path_env="${!file_env}"
     if [ -z "$path_env" ]; then
