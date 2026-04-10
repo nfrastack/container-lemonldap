@@ -4,7 +4,7 @@
 
 llng_bootstrap_filesystem(){
     if [ "${CONFIG_INSTANCE_PATH%/}" != "/etc/lemonldap-ng" ] && [ "${CONFIG_INSTANCE_FILE}" != "lemonldap-ng.ini" ]; then
-        create_folder "/etc/lemonldap-ng" "${LLNG_USER}":"${LLNG_GROUP}" 750
+        create_folder "/etc/lemonldap-ng" "${LLNG_USER}":"${LLNG_GROUP}" 700
         ln -sf "${CONFIG_INSTANCE_PATH}/${CONFIG_INSTANCE_FILE}" /etc/lemonldap-ng/lemonldap-ng.ini
     fi
 
@@ -20,12 +20,11 @@ llng_bootstrap_filesystem(){
         fi
     else
         create_folder \
-                            "/etc/lemonldap-ng,\
-                            /var/lib/lemonldap-ng,
+                            "/var/lib/lemonldap-ng, \
                             /var/lib/lemonldap-ng/cache,\
                             /var/lib/lemonldap-ng/captcha,\
-                            /var/lib/lemonldap-ng/conf,
-                            /var/lib/lemonldap-ng/notifications,
+                            /var/lib/lemonldap-ng/conf, \
+                            /var/lib/lemonldap-ng/notifications, \
                             /var/lib/lemonldap-ng/psessions/lock \
                             /var/lib/lemonldap-ng/sessions/lock \
                             ${LOG_PATH}" \
