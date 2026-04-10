@@ -1,3 +1,9 @@
+## 3.1.1 2026-04-10 <code at nfastack dot com>
+
+   ### Changed
+      - Fix issue with SETUP_TYPE=manual not reading CONFIG_INSTANCE_PATH CONFIG_INSTANCE_FILE properly
+
+
 ## 3.1.0 2026-04-01 <code at nfastack dot com>
 
 Note that your nginx log file names have changed from (access|error)-<site>.log to <site>-(access|error).log due to upstream base image changes

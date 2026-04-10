@@ -3,17 +3,17 @@
 # SPDX-License-Identifier: MIT
 
 llng_bootstrap_filesystem(){
+    if [ "${CONFIG_INSTANCE_PATH%/}" != "/etc/lemonldap-ng" ] && [ "${CONFIG_INSTANCE_FILE}" != "lemonldap-ng.ini" ]; then
+        create_folder "/etc/lemonldap-ng" "${LLNG_USER}":"${LLNG_GROUP}" 750
+        ln -sf "${CONFIG_INSTANCE_PATH}/${CONFIG_INSTANCE_FILE}" /etc/lemonldap-ng/lemonldap-ng.ini
+    fi
+
     if [ "${SETUP_TYPE,,}" = "auto" ] ; then
         create_folder \
                             "${CONFIG_INSTANCE_PATH},\
                             ${DATA_PATH},\
                             ${LOG_PATH}" \
                         "${LLNG_USER}":"${LLNG_GROUP}" 750
-
-        if [ "${CONFIG_INSTANCE_PATH%/}" != "/etc/lemonldap-ng" ] && [ "${CONFIG_INSTANCE_FILE}" != "lemonldap-ng.ini" ]; then
-            mkdir -p /etc/lemonldap-ng
-            ln -sf "${CONFIG_INSTANCE_PATH}/${CONFIG_INSTANCE_FILE}" /etc/lemonldap-ng/lemonldap-ng.ini
-        fi
 
         if [ "${DATA_PATH%/}" != "/var/lib/lemonldap-ng" ] && [ ! -L "/var/lib/lemonldap-ng" ] && [ ! -d "/var/lib/lemonldap-ng" ] ; then
             ln -sf "${DATA_PATH}" /var/lib/lemonldap-ng
