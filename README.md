@@ -326,7 +326,7 @@ For usage with `MODE=PORTAL`
 | `PORTAL_ENABLE_NOTIFICATIONS`                | Enable notifications in portal                                              | `TRUE`                                                     |         |
 | `PORTAL_GEOIP_PATH`                          | Path for GeoIP Database if used                                             |                                                            |         |
 | `PORTAL_SKIN`                                | Override Portal Skin Name                                                   |                                                            |         |
-| `PORTAL_SKIN_BACKGROUND`                                | Filename of skin background Name                                                   |                                                            |         |
+| `PORTAL_SKIN_BACKGROUND`                     | Filename of skin background Name                                            |                                                            |         |
 | `PORTAL_NOTIFICATIONS_TYPE`                  | Portal notifications type                                                   | `FILE`                                                     |         |
 | `PORTAL_NOTIFICATIONS_FILE_PATH`             | Portal notifications file path                                              | `${DATA_PATH}/notifications`                               |         |
 | `PORTAL_NOTIFICATIONS_FILE_SEPERATOR`        | Portal notifications file separator                                         | `_`                                                        |         |
