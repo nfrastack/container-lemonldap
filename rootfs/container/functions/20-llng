@@ -587,6 +587,7 @@ llng_configure_portal() {
         [ -n "${PORTAL_CUSTOM_CSS_FILE}" ]  && portal_lines+=("portalCcustomCSS            = ${PORTAL_CUSTOM_CSS_FILE}")
         [ -n "${PORTAL_CUSTOM_JS_FILE}" ]   && portal_lines+=("portalCustomJs              = ${PORTAL_CUSTOM_JS_FILE}")
         [ -n "${PORTAL_SKIN}" ]             && portal_lines+=("portalSkin                  = ${PORTAL_SKIN}")
+        [ -n "${PORTAL_SKIN_BACKGROUND}" ]  && portal_lines+=("portalSkinBackground        = ${PORTAL_SKIN_BACKGROUND}")
 
         if [ -n "${PORTAL_GEOIP_PATH}" ] ; then
             portal_lines+=("locationDetectGeoIpDatabase = ${PORTAL_GEOIP_PATH}")

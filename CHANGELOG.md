@@ -1,3 +1,9 @@
+## 3.1.2 2026-04-16 <code at nfastack dot com>
+
+   ### Added
+      - Add PORTAL_SKIN_BACKGROUND environment variable to set PortalSkinBackground
+
+
 ## 3.1.1 2026-04-10 <code at nfastack dot com>
 
    ### Changed
