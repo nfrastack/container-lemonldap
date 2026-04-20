@@ -3,6 +3,9 @@
    ### Added
       - LemonLDAP:NG 2.22.3
 
+   ### Changed
+      - Update test nginx configuration
+
 
 ## 3.1.2 2026-04-16 <code at nfastack dot com>
 
