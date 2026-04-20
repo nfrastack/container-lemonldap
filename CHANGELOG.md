@@ -1,3 +1,9 @@
+## 3.1.3 2026-04-20 <code at nfastack dot com>
+
+   ### Added
+      - LemonLDAP:NG 2.22.3
+
+
 ## 3.1.2 2026-04-16 <code at nfastack dot com>
 
    ### Added
