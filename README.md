@@ -344,6 +344,8 @@ For usage with `MODE=PORTAL`
 | `PORTAL_REST_PASS02`                         | Password for REST Authentication                                            |                                                            | x       |
 | `PORTAL_REST_USER...`                        | Username for REST Authentication                                            |                                                            | x       |
 | `PORTAL_REST_PASS...`                        | Password for REST Authentication                                            |                                                            | x       |
+| `PORTAL_STATUS_ALLOWED_IPS`                    | Comma seperated list of IP/Network to allow access to /status                          |                                                            |         |
+|                                              | eg `172.16.0.0/12,192.168.0.253`                                            |                                                            | x       |
 | `PORTAL_ENABLE_IMPERSONATION`                | Allow impersonation using a seperate theme `TRUE`                           | `FALSE`                                                    |         |
 | `PORTAL_IMPERSONATE_HOSTNAME`                | Hostname to use to load the custom impersonation theme                      |                                                            | x       |
 | `PORTAL_IMPERSONATE_THEME`                   | Theme to use to load the impersonation theme                                |                                                            | x       |

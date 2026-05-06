@@ -27,6 +27,7 @@ jobs:
       latest: ${{ matrix.latest }}
       distro_latest: ${{ matrix.distro_latest }}
       platforms: ${{ matrix.arch }}
+      base_image_version: ${{ matrix.base_image_version || '' }}
     secrets: inherit
   cleanup:
     needs: [ build ]

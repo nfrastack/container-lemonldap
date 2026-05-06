@@ -1,3 +1,13 @@
+## 3.2.0 2026-05-06 <code at nfrastack dot com>
+
+   ### Added
+      - Add PORTAL_STATUS_ALLOWED_IPS environment variable to limit access to /status endpoint when mode PORTAL
+
+   ### Changed
+      - 301 to impersonate theme as opposed to proxy
+      - Properly write REST_USER|PASS file for REST authentication
+
+
 ## 3.1.3 2026-04-20 <code at nfastack dot com>
 
    ### Added
