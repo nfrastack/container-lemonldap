@@ -1,3 +1,13 @@
+## 3.3.0 2026-05-07 <code at nfrastack dot com>
+
+   ### Added
+      - Add INSTANCE|PORTAL|HANDLER DB (postgres, pgjson, mysql, sqlite, redis, ldap) Session support
+      - Add PORTAL_CUSTOM_ERROR and PORTAL_CUSTOM_MSG support to write to config with custom language strings
+
+   ### Changed
+      - Fix for language templating
+
+
 ## 3.2.0 2026-05-06 <code at nfrastack dot com>
 
    ### Added
