@@ -440,7 +440,7 @@ llng_configure_portal() {
                 chmod 600 "${PORTAL_REST_AUTH_FILE}"
                 sed -i \
                             -e "/### REST/a\ \   auth_basic_user_file ${PORTAL_REST_AUTH_FILE};" \
-                            -e "/location ~ ^\/index.psgi/a\ \       auth_basic \"${CONFIG_GLOBAL_REST_REALM}\";" \
+                            -e "/location ~ ^\/index.psgi/a\ \       auth_basic \"${PORTAL_REST_REALM}\";" \
                         "${NGINX_CONFIG_PATH%/}"/sites.enabled/portal/location/portal.conf
             fi
         fi

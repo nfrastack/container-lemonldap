@@ -145,33 +145,34 @@ By Default this image is ready to run out of the box, without having to alter an
 
 #### Configuration Variables
 
-| Parameter                                    | Description                                                                    | Default                  | `_FILE` |
-| -------------------------------------------- | ------------------------------------------------------------------------------ | ------------------------ | ------- |
-| `CONFIG_CHECK_INTERVAL`                      | Interval for config checks in seconds                                          | `1`                      |         |
-| `CONFIG_INSTANCE_PATH`                       | Instance config path                                                           | `/config/`               |         |
-| `CONFIG_INSTANCE_FILE`                       | Instance config file                                                           | `instance.cfg`           |         |
-| `CONFIG_GLOBAL_TYPE`                         | Global config type `FILE` or `REST`                                            | `FILE`                   |         |
-| `CONFIG_GLOBAL_CONFIG_TIMEOUT`               | Global config timeout in seconds                                               | `10`                     |         |
-| `CONFIG_GLOBAL_FILE_PATH`                    | Global file path                                                               | `${DATA_PATH}/conf`      |         |
-| `CONFIG_GLOBAL_FILE_PRETTY_PRINT`            | Pretty print config file                                                       | `TRUE`                   |         |
-| `CONFIG_GLOBAL_ENABLE_SECRETS`               | Enable Secrets / Overlay mode                                                  | `TRUE`                   |         |
-| `CONFIG_GLOBAL_SECRETS_PATH`                 | Path name to store file per parameter (filename == keyname)                    | `/var/run/secrets/llng/` | x       |
-| `CONFIG_GLOBAL_SECRETS_READONLY`             | Allow configuration to write to secrets parameters                             | `FALSE`                  |         |
-| `CONFIG_GLOBAL_SECRETS_REAL_TYPE`            | The real configuration backend used to support secrets/overlay                 | `${CONFIG_GLOBAL_TYPE}`  |         |
-| `CONFIG_GLOBAL_REST_HOST`                    | Hostname of Portal REST Server eg `https://sso.example.com/index.psgi/config/` |                          | x       |
-| `CONFIG_GLOBAL_REST_USER`                    | Username to fetch Configuration Information                                    |                          | x       |
-| `CONFIG_GLOBAL_REST_PASS`                    | Password to fetch Configuration Information                                    |                          | x       |
-| `CONFIG_GLOBAL_CACHE_TYPE`                   | Global cache type `FILE` `NONE`                                                | `FILE`                   |         |
-| `CONFIG_GLOBAL_CACHE_FILE_PATH`              | Global cache file path                                                         | `/cache/`                |         |
-| `CONFIG_GLOBAL_CACHE_FILE_NAMESPACE`         | Global cache file namespace                                                    | `config`                 |         |
-| `CONFIG_GLOBAL_CACHE_FILE_DEPTH`             | Global cache file depth                                                        | `0`                      |         |
-| `CONFIG_GLOBAL_CACHE_FILE_DIR_MASK`          | Global cache file dir mask                                                     | `007`                    |         |
-| `CONFIG_GLOBAL_CACHE_FILE_EXPIRY`            | Global cache file expiry                                                       | `600`                    |         |
-| `CONFIG_GLOBAL_SCHEDULE_PURGE_CENTRAL_CACHE` | Cron expression to purge central cache (or `FALSE` to disable)                 | `*/10 * * * *`           |         |
-| `CONFIG_GLOBAL_SCHEDULE_ROTATE_OIDC_KEYS`    | Cron expresstion to rotate OIDC keys (or `FALSE` to disable)                   | `5 5 * * 6`              |         |
-| `CONFIG_GLOBAL_SCHEDULE_PURGE_LOCAL_CACHE`   | Cron expression to purge local cache (or `FALSE` to disable)                   | `1 * * * *`              |         |
-| `CONFIG_ENABLE_CROSS_DOMAIN`                 | (instance) Enable Cross Domain Access (CDA) `TRUE`/`FALSE`                     |                          |         |
-| `CONFIG_USE_SAFE_JAIL`                       | (instance) Use safe jail                                                       | `TRUE`                   |         |
+| Parameter                                    | Description                                                                    | Default                   | `_FILE` |
+| -------------------------------------------- | ------------------------------------------------------------------------------ | ------------------------- | ------- |
+| `CONFIG_CHECK_INTERVAL`                      | Interval for config checks in seconds                                          | `1`                       |         |
+| `CONFIG_INSTANCE_PATH`                       | Instance config path                                                           | `/config/`                |         |
+| `CONFIG_INSTANCE_FILE`                       | Instance config file                                                           | `instance.cfg`            |         |
+| `CONFIG_GLOBAL_TYPE`                         | Global config type `FILE` or `REST`                                            | `FILE`                    |         |
+| `CONFIG_GLOBAL_CONFIG_TIMEOUT`               | Global config timeout in seconds                                               | `10`                      |         |
+| `CONFIG_GLOBAL_FILE_PATH`                    | Global file path                                                               | `${DATA_PATH}/conf`       |         |
+| `CONFIG_GLOBAL_FILE_PRETTY_PRINT`            | Pretty print config file                                                       | `TRUE`                    |         |
+| `CONFIG_GLOBAL_ENABLE_SECRETS`               | Enable Secrets / Overlay mode                                                  | `TRUE`                    |         |
+| `CONFIG_GLOBAL_SECRETS_PATH`                 | Path name to store file per parameter (filename == keyname)                    | `/var/run/secrets/llng/`  | x       |
+| `CONFIG_GLOBAL_SECRETS_READONLY`             | Allow configuration to write to secrets parameters                             | `FALSE`                   |         |
+| `CONFIG_GLOBAL_SECRETS_REAL_TYPE`            | The real configuration backend used to support secrets/overlay                 | `${CONFIG_GLOBAL_TYPE}`   |         |
+| `CONFIG_GLOBAL_REST_HOST`                    | Hostname of Portal REST Server eg `https://sso.example.com/index.psgi/config/` |                           | x       |
+| `CONFIG_GLOBAL_REST_USER`                    | Username to fetch Configuration Information                                    |                           | x       |
+| `CONFIG_GLOBAL_REST_PASS`                    | Password to fetch Configuration Information                                    |                           | x       |
+| `CONFIG_GLOBAL_REST_REALM`                   | Rest Realm                                                                     | `Authentication Required` | x       |
+| `CONFIG_GLOBAL_CACHE_TYPE`                   | Global cache type `FILE` `NONE`                                                | `FILE`                    |         |
+| `CONFIG_GLOBAL_CACHE_FILE_PATH`              | Global cache file path                                                         | `/cache/`                 |         |
+| `CONFIG_GLOBAL_CACHE_FILE_NAMESPACE`         | Global cache file namespace                                                    | `config`                  |         |
+| `CONFIG_GLOBAL_CACHE_FILE_DEPTH`             | Global cache file depth                                                        | `0`                       |         |
+| `CONFIG_GLOBAL_CACHE_FILE_DIR_MASK`          | Global cache file dir mask                                                     | `007`                     |         |
+| `CONFIG_GLOBAL_CACHE_FILE_EXPIRY`            | Global cache file expiry                                                       | `600`                     |         |
+| `CONFIG_GLOBAL_SCHEDULE_PURGE_CENTRAL_CACHE` | Cron expression to purge central cache (or `FALSE` to disable)                 | `*/10 * * * *`            |         |
+| `CONFIG_GLOBAL_SCHEDULE_ROTATE_OIDC_KEYS`    | Cron expresstion to rotate OIDC keys (or `FALSE` to disable)                   | `5 5 * * 6`               |         |
+| `CONFIG_GLOBAL_SCHEDULE_PURGE_LOCAL_CACHE`   | Cron expression to purge local cache (or `FALSE` to disable)                   | `1 * * * *`               |         |
+| `CONFIG_ENABLE_CROSS_DOMAIN`                 | (instance) Enable Cross Domain Access (CDA) `TRUE`/`FALSE`                     |                           |         |
+| `CONFIG_USE_SAFE_JAIL`                       | (instance) Use safe jail                                                       | `TRUE`                    |         |
 
 #### Socket & Networking Variables
 
@@ -316,6 +317,7 @@ For usage with `MODE=PORTAL`
 |                                              | that can be referenced for use withihn the manager or config                                          |                                                            |         |
 | `PORTAL_TEMPLATE_CUSTOM_STATIC_PATH`         | As above, the location of static folder                                                               |                                                            |         |
 | `PORTAL_ENABLE_GITLAB_OAUTH`                 | Enable Gitlab OAuth for portal                                                                        | `FALSE`                                                    |         |
+| `PORTAL_REST_REALM` | Advertised Basic Authentication Realm | `${CONFIG_GLOBAL_REST_REALM}` | |
 | `PORTAL_SESSIONS_ACTIVE_TYPE`                | Override Instance or Global Config active session type. See [Session Backends](#session-backends)     | `NONE`                                                     |         |
 | `PORTAL_SESSIONS_ACTIVE_FILE_PATH`           | Active session path (when `TYPE=FILE`)                                                                | `${INSTANCE_SESSIONS_ACTIVE_FILE_PATH}`                    |         |
 | `PORTAL_SESSIONS_ACTIVE_DB_HOST`             | Database / Redis server hostname or IP (SQL and Redis backends)                                       |                                                            | x       |
