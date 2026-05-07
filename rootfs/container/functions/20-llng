@@ -160,38 +160,8 @@ llng_configure_handler() {
         var_true "${HANDLER_REDIRECT_ON_ERROR}" && handler_lines+=("useRedirectOnError  = 1")
         var_true "${HANDLER_STATUS}"            && handler_lines+=("status              = 1")
 
-        case "${HANDLER_SESSIONS_ACTIVE_TYPE,,}" in
-            "file" )
-                create_folder   \
-                                    "${HANDLER_SESSIONS_ACTIVE_PATH},\
-                                     ${HANDLER_SESSIONS_ACTIVE_PATH}/lock" \
-                                "${LLNG_USER}":"${LLNG_GROUP}" 750
-
-                handler_lines+=(
-                                  "globalStorage               = Apache::Session::File"
-                                  "globalStorageOptions        = { \\"
-                                  "                                'Directory'      => '${HANDLER_SESSIONS_ACTIVE_FILE_PATH%/}/', \\"
-                                  "                                'LockDirectory'  => '${HANDLER_SESSIONS_ACTIVE_FILE_PATH%/}/lock/', \\"
-                                  "                              }"
-                                )
-            ;;
-        esac
-
-        case "${HANDLER_SESSIONS_PERSISTENT_TYPE,,}" in
-            "file" )
-                create_folder   \
-                                    "${HANDLER_SESSIONS_PERSISTENT_PATH},\
-                                     ${HANDLER_SESSIONS_PERSISTENT_PATH}/lock" \
-                                "${LLNG_USER}":"${LLNG_GROUP}" 750
-                handler_lines+=(
-                                  "persistentStorage           = Apache::Session::File"
-                                  "persistentStorageOptions    = { \\"
-                                  "                                'Directory'      => '${HANDLER_SESSIONS_PERSISTENT_FILE_PATH%/}/', \\"
-                                  "                                'LockDirectory'  => '${HANDLER_SESSIONS_PERSISTENT_FILE_PATH%/}/lock/', \\"
-                                  "                              }"
-                                )
-            ;;
-        esac
+        llng_build_session_storage_lines handler_lines global     HANDLER_SESSIONS_ACTIVE     "${HANDLER_SESSIONS_ACTIVE_TYPE}"
+        llng_build_session_storage_lines handler_lines persistent HANDLER_SESSIONS_PERSISTENT "${HANDLER_SESSIONS_PERSISTENT_TYPE}"
 
         case "${HANDLER_SESSIONS_CACHE_TYPE,,}" in
             file )
@@ -226,38 +196,8 @@ llng_configure_instance() {
     var_true "${CONFIG_USE_SAFE_JAIL}"          && instance_lines+=("useSafeJail                = 1")
     var_true "${CONFIG_ENABLE_CROSS_DOMAIN}"    && instance_lines+=("cda                        = 1")
 
-    case "${INSTANCE_SESSIONS_ACTIVE_TYPE,,}" in
-        "file" )
-            create_folder   \
-                                "${INSTANCE_SESSIONS_ACTIVE_FILE_PATH},\
-                                 ${INSTANCE_SESSIONS_ACTIVE_FILE_PATH}/lock" \
-                            "${LLNG_USER}":"${LLNG_GROUP}" 750
-
-            instance_lines+=(
-                              "globalStorage               = Apache::Session::File"
-                              "globalStorageOptions        = { \\"
-                              "                                'Directory'      => '${INSTANCE_SESSIONS_ACTIVE_FILE_PATH%/}/', \\"
-                              "                                'LockDirectory'  => '${INSTANCE_SESSIONS_ACTIVE_FILE_PATH%/}/lock/', \\"
-                              "                              }"
-                            )
-        ;;
-    esac
-
-    case "${INSTANCE_SESSIONS_PERSISTENT_TYPE,,}" in
-        "file" )
-            create_folder   \
-                                "${INSTANCE_SESSIONS_PERSISTENT_FILE_PATH},\
-                                 ${INSTANCE_SESSIONS_PERSISTENT_FILE_PATH}/lock" \
-                            "${LLNG_USER}":"${LLNG_GROUP}" 750
-            instance_lines+=(
-                              "persistentStorage           = Apache::Session::File"
-                              "persistentStorageOptions    = { \\"
-                              "                                'Directory'      => '${INSTANCE_SESSIONS_PERSISTENT_FILE_PATH%/}/', \\"
-                              "                                'LockDirectory'  => '${INSTANCE_SESSIONS_PERSISTENT_FILE_PATH%/}/lock/', \\"
-                              "                              }"
-                            )
-        ;;
-    esac
+    llng_build_session_storage_lines instance_lines global     INSTANCE_SESSIONS_ACTIVE     "${INSTANCE_SESSIONS_ACTIVE_TYPE}"
+    llng_build_session_storage_lines instance_lines persistent INSTANCE_SESSIONS_PERSISTENT "${INSTANCE_SESSIONS_PERSISTENT_TYPE}"
 
     case "${INSTANCE_SESSIONS_CACHE_TYPE,,}" in
         file )
@@ -451,7 +391,7 @@ llng_configure_portal() {
         llng_bootstrap_global_configuration portal
         llng_configure_socket portal
 
-        update_template ${NGINX_CONFIG_PATH%/}/sites.enabled/portal/location/portal.conf \
+        update_template "${NGINX_CONFIG_PATH%/}"/sites.enabled/portal/location/portal.conf \
                                                                                             PORTAL_STATIC_PATH \
                                                                                             PORTAL_TEMPLATES_PATH
 
@@ -475,17 +415,17 @@ llng_configure_portal() {
                 sed -i "/allow 127.0.0.1/a\ \ \      allow ${allowed_host};" "${NGINX_CONFIG_PATH%/}"/sites.enabled/portal/location/portal.conf
             done
 
-            portal_rest_users=$(printenv | sort | grep -c '^PORTAL_REST_USER.*')
-            for ((i = 01; i <= portal_rest_users; i++)); do
-                i=$(printf "%02d" $i)
+            _() {
+                local instance="${1}"
+                local portal_rest_user="PORTAL_REST_USER${instance}"
+                local portal_rest_pass="PORTAL_REST_PASS${instance}"
                 transform_var file \
-                                    PORTAL_REST_USER${i} \
-                                    PORTAL_REST_PASS${i}
-                portal_rest_user=PORTAL_REST_USER${i}
-                portal_rest_pass=PORTAL_REST_PASS${i}
+                                    "${portal_rest_user}" \
+                                    "${portal_rest_pass}"
                 print_debug "[configure_portal] Creating REST User: ${!portal_rest_user}"
-                htpasswd -b -n ${!portal_rest_user:-$PORTAL_REST_USER} ${!portal_rest_pass:-$PORTAL_REST_PASS} | write_file -a root:"${LLNG_GROUP}" "${PORTAL_REST_AUTH_FILE}":640
-            done
+                htpasswd -b -n "${!portal_rest_user}" "${!portal_rest_pass}" | write_file -a root:"${LLNG_GROUP}" "${PORTAL_REST_AUTH_FILE}":640
+            }
+            floop $(set -o posix; set | sort | grep -cE "^PORTAL_REST_USER[0-9]") _ RESU_TSER_LATROP
 
             if [ -f "${PORTAL_REST_AUTH_FILE}" ] ; then
                 _rest_file_timestamp=$(date -r "${PORTAL_REST_AUTH_FILE}" +%Y%m%d%H%M.%S)
@@ -517,10 +457,6 @@ llng_configure_portal() {
         llng_override_path "/usr/share/lemonldap-ng/portal/templates" "${PORTAL_TEMPLATES_PATH%/}" "/container/data/llng/assets/portal/templates" "${LLNG_USER}" "${LLNG_GROUP}" 750
 
         for lang_env in $(env | grep -E '^PORTAL_LANGUAGE_[A-Z0-9]+_FILE=' | awk -F= '{print $1}'); do
-            type_code="${env_var#PORTAL_LANGUAGE_}"
-            type_code="${type_code%_FILE}"
-            file_name="${type_code,,}.json"
-            file_path="${PORTAL_LANGUAGE_PATH%/}/$file_name"
             llng_override_file "${lang_env}" "${PORTAL_LANGUAGE_PATH%/}" "${LLNG_USER}" "${LLNG_GROUP}" 750
         done
 
@@ -574,7 +510,6 @@ llng_configure_portal() {
             fi
         done
 
-
         if var_true "${PORTAL_ENABLE_CAPTCHA}" ; then
             create_folder   \
                                 "${PORTAL_CAPTCHA_PATH}" \
@@ -603,38 +538,8 @@ llng_configure_portal() {
                             "${LLNG_USER}":"${LLNG_GROUP}" 750
         fi
 
-        case "${PORTAL_SESSIONS_ACTIVE_TYPE,,}" in
-            "file" )
-                create_folder   \
-                                    "${PORTAL_SESSIONS_ACTIVE_PATH},\
-                                    ${PORTAL_SESSIONS_ACTIVE_PATH}/lock" \
-                                "${LLNG_USER}":"${LLNG_GROUP}" 750
-
-                portal_lines+=(
-                                "globalStorage               = Apache::Session::File"
-                                "globalStorageOptions        = { \\"
-                                "                                'Directory'      => '${PORTAL_SESSIONS_ACTIVE_FILE_PATH%/}/', \\"
-                                "                                'LockDirectory'  => '${PORTAL_SESSIONS_ACTIVE_FILE_PATH%/}/lock/', \\"
-                                "                              }"
-                              )
-            ;;
-        esac
-
-        case "${PORTAL_SESSIONS_PERSISTENT_TYPE,,}" in
-            "file" )
-                create_folder   \
-                                    "${PORTAL_SESSIONS_PERSISTENT_PATH},\
-                                    ${PORTAL_SESSIONS_PERSISTENT_PATH}/lock" \
-                                "${LLNG_USER}":"${LLNG_GROUP}" 750
-                portal_lines+=(
-                                "persistentStorage           = Apache::Session::File"
-                                "persistentStorageOptions    = { \\"
-                                "                                'Directory'      => '${PORTAL_SESSIONS_PERSISTENT_FILE_PATH%/}/', \\"
-                                "                                'LockDirectory'  => '${PORTAL_SESSIONS_PERSISTENT_FILE_PATH%/}/lock/', \\"
-                                "                              }"
-                              )
-            ;;
-        esac
+        llng_build_session_storage_lines portal_lines global     PORTAL_SESSIONS_ACTIVE     "${PORTAL_SESSIONS_ACTIVE_TYPE}"
+        llng_build_session_storage_lines portal_lines persistent PORTAL_SESSIONS_PERSISTENT "${PORTAL_SESSIONS_PERSISTENT_TYPE}"
 
         if var_true "${PORTAL_ENABLE_NOTIFICATIONS}" ; then
             portal_lines+=("notification                = 1")
@@ -656,6 +561,17 @@ llng_configure_portal() {
                 portal_lines+=("notificationsMaxRetrieve    = ${PORTAL_NOTIFICATIONS_EXPLORER_MAX_RETRIEVE}")
             fi
         fi
+
+        local _num
+        while IFS= read -r _env_var; do
+            _num="${_env_var#PORTAL_CUSTOM_ERROR_}"
+            portal_lines+=("error_${_num}              = ${!_env_var}")
+        done < <(env | grep -E '^PORTAL_CUSTOM_ERROR_[0-9]+=' | awk -F= '{print $1}' | sort -t_ -k4 -n)
+
+        while IFS= read -r _env_var; do
+            _num="${_env_var#PORTAL_CUSTOM_MSG_}"
+            portal_lines+=("msg_${_num}                = ${!_env_var}")
+        done < <(env | grep -E '^PORTAL_CUSTOM_MSG_[0-9]+=' | awk -F= '{print $1}' | sort -t_ -k4 -n)
 
         config_portal=$(printf "%s\n" "${portal_lines[@]}")
     fi
@@ -766,6 +682,208 @@ llng_logtype() {
     case "${1,,}" in
         "file" | "syslog" ) echo "Lemonldap::NG::Common::Logger::Syslog" ;;
         "console" | * )     echo "Lemonldap::NG::Common::Logger::Std" ;;
+    esac
+}
+
+llng_session_class() {
+    case "${1,,}" in
+        file )          echo "Apache::Session::File" ;;
+        ldap )          echo "Apache::Session::Browseable::LDAP" ;;
+        mysql )         echo "Apache::Session::Browseable::MySQL" ;;
+        mysqljson )     echo "Apache::Session::Browseable::MySQLJSON" ;;
+        pghstore )      echo "Apache::Session::Browseable::PgHstore" ;;
+        pgjson )        echo "Apache::Session::Browseable::PgJSON" ;;
+        postgres )      echo "Apache::Session::Browseable::Postgres" ;;
+        redis )         echo "Apache::Session::Browseable::Redis" ;;
+        sqlite )        echo "Apache::Session::Browseable::SQLite" ;;
+        * )             print_error "[llng_session_class] Unknown session backend type: '${1}'" ; return 1 ;;
+    esac
+}
+
+llng_build_session_storage_lines() {
+# llng_build_session_storage_lines <nameref> <key_prefix> <env_prefix> <type>
+#   <nameref>     name of array to append lines into
+#   <key_prefix>  "global" or "persistent"  -> builds globalStorage / persistentStorage keys
+#   <env_prefix>  e.g. PORTAL_SESSIONS_ACTIVE or PORTAL_SESSIONS_PERSISTENT
+#   <type>        backend type (file|postgres|pgjson|pghstore|mysql|mysqljson|sqlite|redis|ldap|custom)
+
+    local -n _bssl_arr="${1}"
+    local _kpfx="${2}"
+    local _epfx="${3}"
+    local _type="${4,,}"
+    local _sk; _sk="$(printf "%-28s" "${_kpfx}Storage")"
+    local _sk_opts; _sk_opts="$(printf "%-28s" "${_kpfx}StorageOptions")"
+
+    case "${_type}" in
+        none | "" )
+            return 0
+        ;;
+        custom )
+            local _cls_v="${_epfx}_CLASS"
+            local _raw_v="${_epfx}_CUSTOM_OPTIONS"
+            sanity_var "${_cls_v}" "Custom Session Class Name"
+            _bssl_arr+=(
+                "${_sk}= ${!_cls_v}"
+                "${_sk_opts}= ${!_raw_v}"
+            )
+        ;;
+        file )
+            local _fp_v="${_epfx}_FILE_PATH"
+            local _fp="${!_fp_v}"
+            create_folder "${_fp},${_fp}/lock" "${LLNG_USER}:${LLNG_GROUP}" 750
+            _bssl_arr+=(
+                "${_sk}= Apache::Session::File"
+                "${_sk_opts}= { \\"
+                "                                'Directory'        => '${_fp%/}/', \\"
+                "                                'LockDirectory'    => '${_fp%/}/lock/', \\"
+                "                              }"
+            )
+        ;;
+        ldap )
+            local _srv_v="${_epfx}_LDAP_SERVER"
+            local _base_v="${_epfx}_LDAP_BASE"
+            local _bdn_v="${_epfx}_LDAP_BIND_DN"
+            local _bpas_v="${_epfx}_LDAP_BIND_PASS"
+            local _raw_v="${_epfx}_LDAP_RAW"
+            local _idx_v="${_epfx}_LDAP_INDEX"
+
+            transform_var file \
+                "${_srv_v}" \
+                "${_base_v}" \
+                "${_bdn_v}" \
+                "${_bpas_v}"
+            sanity_var "${_srv_v}"  "Session LDAP Server URI"
+            sanity_var "${_base_v}" "Session LDAP Base DN"
+            sanity_var "${_bdn_v}"  "Session LDAP Bind DN"
+            sanity_var "${_bpas_v}" "Session LDAP Bind Password"
+
+            local _opts=(
+                "${_sk}= Apache::Session::Browseable::LDAP"
+                "${_sk_opts}= { \\"
+                "                                'ldapServer'        => '${!_srv_v}', \\"
+                "                                'ldapConfBase'      => '${!_base_v}', \\"
+                "                                'ldapBindDN'        => '${!_bdn_v}', \\"
+                "                                'ldapBindPassword'  => '${!_bpas_v}', \\"
+            )
+            [ -n "${!_raw_v}" ] && _opts+=("                                'ldapRaw'           => '${!_raw_v}', \\")
+            [ -n "${!_idx_v}" ] && _opts+=("                                'Index'             => '${!_idx_v}', \\")
+            _opts+=("                              }")
+            _bssl_arr+=("${_opts[@]}")
+        ;;
+        mysql | mysqljson | pgjson | pghstore | postgres | sqlite )
+            local _class; _class="$(llng_session_class "${_type}")"
+            local _dsn_v="${_epfx}_DB_DSN"
+            local _hst_v="${_epfx}_DB_HOST"
+            local _prt_v="${_epfx}_DB_PORT"
+            local _dbn_v="${_epfx}_DB_NAME"
+            local _usr_v="${_epfx}_DB_USER"
+            local _pas_v="${_epfx}_DB_PASS"
+            local _tbl_v="${_epfx}_DB_TABLE"
+            local _cmt_v="${_epfx}_DB_COMMIT"
+            local _idx_v="${_epfx}_DB_INDEX"
+
+            transform_var file \
+                                "${_dsn_v}" \
+                                "${_hst_v}" \
+                                "${_prt_v}" \
+                                "${_dbn_v}" \
+                                "${_usr_v}" \
+                                "${_pas_v}"
+
+            local _dsn="${!_dsn_v}"
+            if [ -z "${_dsn}" ]; then
+                sanity_var "${_dbn_v}" "Session ${_type} Database Name"
+                case "${_type}" in
+                    mysql | mysqljson )
+                        sanity_var "${_hst_v}" "Session ${_type} Host"
+                        _dsn="dbi:mysql:database=${!_dbn_v};host=${!_hst_v}"
+                        [ -n "${!_prt_v}" ] && _dsn+=";port=${!_prt_v}"
+                    ;;
+                    postgres | pgjson | pghstore )
+                        sanity_var "${_hst_v}" "Session ${_type} Host"
+                        _dsn="dbi:Pg:dbname=${!_dbn_v};host=${!_hst_v}"
+                        [ -n "${!_prt_v}" ] && _dsn+=";port=${!_prt_v}"
+                    ;;
+                    sqlite )
+                        _dsn="dbi:SQLite:dbname=${!_dbn_v}"
+                    ;;
+                esac
+            fi
+
+            local _opts=(
+                "${_sk}= ${_class}"
+                "${_sk_opts}= { \\"
+                "                                'DataSource'  => '${_dsn}', \\"
+            )
+
+            case "${_type}" in
+                sqlite )
+                    # Does not use username or password
+                ;;
+                * )
+                    sanity_var "${_usr_v}" "Session ${_type} UserName"
+                    sanity_var "${_pas_v}" "Session ${_type} Password"
+                    _opts+=(
+                        "                                'UserName'    => '${!_usr_v}', \\"
+                        "                                'Password'    => '${!_pas_v}', \\"
+                    )
+                ;;
+            esac
+
+            _opts+=("                                'TableName'   => '${!_tbl_v}', \\")
+
+            case "${_type}" in
+                pgjson | pghstore | postgres )
+                    # Commit mandatory for postgres backends
+                    _opts+=("                                'Commit'      => ${!_cmt_v:-1}, \\")
+                ;;
+            esac
+
+            if [ -n "${!_idx_v}" ]; then    # Index needed for MySQL|Maria/Postgres/PgHstore, but not PgJSON
+                _opts+=("                                'Index'       => '${!_idx_v}', \\")
+            fi
+            _opts+=("                              }")
+            _bssl_arr+=("${_opts[@]}")
+        ;;
+        redis )
+            local _hst_v="${_epfx}_DB_HOST"
+            local _prt_v="${_epfx}_DB_PORT"
+            local _sock_v="${_epfx}_REDIS_SOCK"
+            local _sent_v="${_epfx}_REDIS_SENTINELS"
+            local _svc_v="${_epfx}_REDIS_SERVICE"
+            local _pas_v="${_epfx}_DB_PASS"
+            local _db_v="${_epfx}_DB_NAME"
+            local _idx_v="${_epfx}_DB_INDEX"
+
+            transform_var file \
+                                "${_hst_v}" \
+                                "${_prt_v}" \
+                                "${_sock_v}" \
+                                "${_pas_v}" \
+                                "${_db_v}"
+
+            local _server=""
+            if [ -n "${!_hst_v}" ]; then
+                _server="${!_hst_v}:${!_prt_v:-6379}"
+            fi
+
+            local _opts=(
+                "${_sk}= Apache::Session::Browseable::Redis"
+                "${_sk_opts}= { \\"
+            )
+            if [ -n "${_server}" ];     then _opts+=("                                'server'      => '${_server}', \\"); fi
+            if [ -n "${!_sock_v}" ];    then _opts+=("                                'sock'        => '${!_sock_v}', \\"); fi
+            if [ -n "${!_sent_v}" ];    then _opts+=("                                'sentinels'   => '${!_sent_v}', \\"); fi
+            if [ -n "${!_svc_v}" ];     then _opts+=("                                'service'     => '${!_svc_v}', \\"); fi
+            if [ -n "${!_pas_v}" ];     then _opts+=("                                'password'    => '${!_pas_v}', \\"); fi
+            if [ -n "${!_db_v}" ];      then _opts+=("                                'database'    => ${!_db_v}, \\"); fi
+            if [ -n "${!_idx_v}" ];     then _opts+=("                                'Index'       => '${!_idx_v}', \\"); fi
+            _opts+=("                              }")
+            _bssl_arr+=("${_opts[@]}")
+        ;;
+        * )
+            print_error "Unknown session storage type '${_type}' for ${_epfx}. Exiting."
+            exit 1
     esac
 }
 

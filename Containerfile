@@ -274,7 +274,7 @@ RUN echo "" && \
     ./Build install && \
     container_build_log add "LLNG Session Browseable module" "${LLNG_SESSION_BROWSEABLE_VERSION}" "${LLNG_SESSION_BROWSEABLE_REPO_URL}" && \
     \
-    if [ "${LEMONLDAP_VERSION}" != "master" ] ; then LEMONLDAP_VERSION=v$LEMONLDAP_VERSION ; fi && \
+    if [ "${LEMONLDAP_VERSION}" != "master" ] ; then LEMONLDAP_VERSION=v${LEMONLDAP_VERSION} ; fi && \
     ## Changelog !!
     clone_git_repo "${LEMONLDAP_REPO_URL}" "${LEMONLDAP_VERSION}" && \
     sed -i \

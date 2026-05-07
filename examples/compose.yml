@@ -1,6 +1,6 @@
 services:
   lemonldap-app:
-    image: docker.io/nfrastack/lemonldap:latest
+    image: docker.io/nfrastack/lemonldap:develop
     container_name: lemonldap-app
     volumes:
       - ./data/etc/lemonldap-ng:/etc/lemonldap-ng
@@ -14,7 +14,7 @@ services:
       - CONTAINER_NAME=lemonldap-app
 
       - SETUP_TYPE=AUTO
-
+      - DOMAIN_NAME=example.com
       - API_HOSTNAME=api.manager.sso.example.com
       - MANAGER_HOSTNAME=manager.sso.example.com
       - PORTAL_HOSTNAME=sso.example.com
