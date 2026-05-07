@@ -1,3 +1,9 @@
+## 3.3.1 2026-05-07 <code at nfrastack dot com>
+
+   ### Added
+      - Add PORTAL_REST_REALM and CONFIG_GLOBAL_REST_REALM variables to support basic authentication
+
+
 ## 3.3.0 2026-05-07 <code at nfrastack dot com>
 
    ### Added
