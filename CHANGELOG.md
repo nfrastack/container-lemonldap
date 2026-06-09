@@ -1,3 +1,9 @@
+## 3.3.3 2026-06-09 <code at nfrastack dot com>
+
+   ### Added
+      - LaSSO 2.9.1
+
+
 ## 3.3.2 2026-06-02 <code at nfrastack dot com>
 
    ### Added
