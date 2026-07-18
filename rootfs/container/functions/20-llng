@@ -156,7 +156,7 @@ llng_configure_handler() {
         local handler_lines=("[handler]")
         [ -n "${HANDLER_LOG_TYPE}" ]            && handler_lines+=("logger              = $(llng_logtype "$HANDLER_LOG_TYPE")")
         [ -n "${HANDLER_LOG_USER_TYPE}" ]       && handler_lines+=("userLogger          = $(llng_logtype "$HANDLER_LOG_TYPE")")
-        [ -n "${HANDLER_LOG_LEVEL}" ]           && handler_lines+=("logLevel            = ${HANDLER_LOG_LEVEL}")
+        [ -n "${HANDLER_LOG_LEVEL}" ]           && handler_lines+=("logLevel            = ${HANDLER_LOG_LEVEL,,}")
         var_true "${HANDLER_REDIRECT_ON_ERROR}" && handler_lines+=("useRedirectOnError  = 1")
         var_true "${HANDLER_STATUS}"            && handler_lines+=("status              = 1")
 
@@ -187,7 +187,7 @@ llng_configure_handler() {
 llng_configure_instance() {
     print_debug "Configuring Logging"
     local instance_lines=(
-        "logLevel                   = ${LOG_LEVEL}"
+        "logLevel                   = ${LOG_LEVEL,,}"
         "logger                     = $(llng_logtype "${LOG_TYPE}")"
         "userLogger                 = $(llng_logtype "${LOG_USER_TYPE}")"
         "checkTime                  = ${CONFIG_CHECK_INTERVAL}"
@@ -373,7 +373,7 @@ llng_configure_manager() {
         [ -n "${MANAGER_CUSTOM_PORTAL_URL}" ]  && manager_lines+=("customPortalUrl = ${MANAGER_CUSTOM_PORTAL_URL}")
         [ -n "${MANAGER_LOG_TYPE}" ]           && manager_lines+=("logger          = $(llng_logtype "${MANAGER_LOG_TYPE}")")
         [ -n "${MANAGER_LOG_USER_TYPE}" ]      && manager_lines+=("userLogger      = $(llng_logtype "$MANAGER_LOG_USER_TYPE")")
-        [ -n "${MANAGER_LOG_LEVEL}" ]          && manager_lines+=("logLevel        = ${MANAGER_LOG_LEVEL}")
+        [ -n "${MANAGER_LOG_LEVEL}" ]          && manager_lines+=("logLevel        = ${MANAGER_LOG_LEVEL,,}")
 
         config_manager=$(printf "%s\n" "${manager_lines[@]}")
     fi
@@ -527,7 +527,7 @@ llng_configure_portal() {
 
         [ -n "${PORTAL_LOG_TYPE}" ]         && portal_lines+=("logger                      = $(llng_logtype "$PORTAL_LOG_TYPE")")
         [ -n "${PORTAL_LOG_USER_TYPE}" ]    && portal_lines+=("userLogger                  = $(llng_logtype "$PORTAL_LOG_USER_TYPE")")
-        [ -n "${PORTAL_LOG_LEVEL}" ]        && portal_lines+=("logLevel                    = ${PORTAL_LOG_LEVEL}")
+        [ -n "${PORTAL_LOG_LEVEL}" ]        && portal_lines+=("logLevel                    = ${PORTAL_LOG_LEVEL,,}")
         [ -n "${PORTAL_CUSTOM_CSS_FILE}" ]  && portal_lines+=("portalCcustomCSS            = ${PORTAL_CUSTOM_CSS_FILE}")
         [ -n "${PORTAL_CUSTOM_JS_FILE}" ]   && portal_lines+=("portalCustomJs              = ${PORTAL_CUSTOM_JS_FILE}")
         [ -n "${PORTAL_SKIN}" ]             && portal_lines+=("portalSkin                  = ${PORTAL_SKIN}")
