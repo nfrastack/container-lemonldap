@@ -1,3 +1,10 @@
+## 3.3.4 2026-07-18 <code at nfrastack dot com>
+
+   ### Changed
+      - Transform log levels to lowercase
+      - Alpine 3.24 base
+
+
 ## 3.3.3 2026-06-09 <code at nfrastack dot com>
 
    ### Added
@@ -64,7 +71,7 @@ Note that your nginx log file names have changed from (access|error)-<site>.log 
    ### Added
       - Convert to nfrastack/container-nginx:8.x.x format
       - PORTAL_LANGUAGE_<LANGUAGE>_FILE override capabilities
-      - Switch to Alpine 3.23
+      - Switch to Alpine 3.24
       - LemonLDAP 2.22.2
       - Environment variable PORTAL_BACKGROUNDS_PATH introduced to allow for custom backgrounds
 
