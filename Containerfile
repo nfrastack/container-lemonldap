@@ -93,7 +93,6 @@ RUN echo "" && \
                                 py-pip \
                                 py-six \
                                 py3-sphinx \
-                                sphinx \
                                 wget \
                                 xmlsec-dev \
                             " \
