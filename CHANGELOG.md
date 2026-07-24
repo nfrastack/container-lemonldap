@@ -1,3 +1,13 @@
+## 3.3.5 2026-07-24 <code at nfrastack dot com>
+
+   ### Added
+      - LemonLDAP:NG 2.23.1
+
+   ### Changed
+      - Force log levels to be lowercase
+      - Install sphinx from pip
+
+
 ## 3.3.4 2026-07-18 <code at nfrastack dot com>
 
    ### Changed
