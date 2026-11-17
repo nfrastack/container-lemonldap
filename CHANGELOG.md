@@ -1,3 +1,12 @@
+## 3.3.8 2026-11-17 <code at nfrastack dot com>
+
+   ### Added
+      - LemonLDAP 2.23.4
+      - LaSSO 2.9.3
+
+   ### Changed
+
+
 ## 3.3.7 2026-11-17 <code at nfrastack dot com>
 
    ### Changed
