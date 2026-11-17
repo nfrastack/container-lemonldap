@@ -106,7 +106,7 @@ llng_configure_api() {
         api_allowed=$(echo "${API_ALLOWED_IPS}" | tr "," "\n" | uniq)
         for allowed_host in ${api_allowed}; do
             print_debug "API - Allowing ${allowed_host} to access"
-            sed -i "/allow 127.0.0/a\ \ \   allow ${allowed_host};" "${NGINX_CONFIG_PATH%/}"/sites.enabled/api/location/api.conf
+            sed -i "/^ *allow 127.0.0/a\ \ \   allow ${allowed_host};" "${NGINX_CONFIG_PATH%/}"/sites.enabled/api/location/api.conf
         done
     fi
 }

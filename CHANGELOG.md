@@ -1,3 +1,9 @@
+## 3.3.7 2026-11-17 <code at nfrastack dot com>
+
+   ### Changed
+      - enforce api and manager ip allow list
+
+
 ## 3.3.6 2026-07-24 <code at nfrastack dot com>
 
    ### Added
